@@ -10,14 +10,8 @@
     --ok:#1e7d32;--okbg:#d9fdd3;--bad:#c62828;--badbg:#fde8e8;
     --accent:#1a73e8;--accentText:#fff;
   }
-  [data-theme="Alba"]{
-    --accent:#e91e63; /* rosa */
-    --accentText:#fff;
-  }
-  [data-theme="Lara"]{
-    --accent:#7e57c2; /* morado */
-    --accentText:#fff;
-  }
+  [data-theme="Alba"]{ --accent:#e91e63; --accentText:#fff; }
+  [data-theme="Lara"]{ --accent:#7e57c2; --accentText:#fff; }
   *{box-sizing:border-box}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:16px;max-width:980px;background:var(--bg)}
   h1,h2{margin:.2em 0}
@@ -53,8 +47,6 @@
 </style>
 </head>
 <body>
-
-<!-- ============ LOGIN ============ -->
 <section id="loginView" class="card">
   <h1>👋 Hola</h1>
   <p>Elige quién va a practicar hoy y escribe su clave (PIN de 4 dígitos).</p>
@@ -80,7 +72,6 @@
   </div>
 </section>
 
-<!-- ============ APP ============ -->
 <section id="appView" class="hidden">
   <header class="appbar">
     <div><b>Usuario:</b> <span id="who"></span></div>
@@ -151,9 +142,9 @@
     <div id="result" class="result hidden"></div>
     <div id="options"></div>
     <div id="explanation" class="card hidden" style="background:#f9fafc"></div>
-    <div class="row">
-      <button id="similar">Probar una similar</button>
-      <button id="next">Siguiente</button>
+    <div class="row" style="margin-top:8px">
+      <button id="similar" class="hidden">Similar (automática)</button>
+      <button id="next" class="accent hidden">Siguiente pregunta</button>
     </div>
   </section>
 
@@ -190,9 +181,9 @@
       </div>
       <div id="examQ" style="font-size:18px;font-weight:600;margin-top:6px"></div>
       <div id="examOptions"></div>
-      <div class="row">
+      <div class="row" style="margin-top:8px">
         <button id="examPrev">Anterior</button>
-        <button id="examNext">Siguiente</button>
+        <button id="examNext" class="accent">Siguiente</button>
         <div class="spacer"></div>
         <button onclick="finishExam()" class="accent">Finalizar</button>
       </div>
@@ -215,7 +206,7 @@
       <div id="dailyResult" class="result hidden"></div>
       <div id="dailyExplain" class="small muted hidden"></div>
       <div class="row" style="margin-top:8px">
-        <button id="dailyNext">Siguiente</button>
+        <button id="dailyNext" class="accent">Siguiente</button>
       </div>
     </div>
     <div id="dailyStart" class="row">
@@ -253,8 +244,7 @@ const STUDY = {
   "Matemáticas": {
     "Álgebra": {
       theory: `<h3>Ecuaciones lineales</h3>
-      <p>Una ecuación lineal tiene la forma <i>ax + b = c</i>. Para resolverla, aislamos <i>x</i>:
-      <ol><li>Restar o sumar para quitar <i>b</i>.</li><li>Dividir por <i>a</i>.</li></ol></p>`,
+      <p>Una ecuación lineal tiene la forma <i>ax + b = c</i>. La estrategia universal es aislar la incógnita con operaciones inversas y de igual forma a ambos lados: primero eliminamos la constante (sumando o restando), y luego despejamos dividiendo por el coeficiente de <i>x</i>. Este procedimiento conserva la igualdad y permite verificar el resultado sustituyendo de nuevo en la ecuación original.</p>`,
       examples: [
         {title:"Ejemplo 1", steps:["3x + 2 = 14","3x = 12","x = 4"]},
         {title:"Ejemplo 2", steps:["5x − 10 = 0","5x = 10","x = 2"]}
@@ -262,160 +252,235 @@ const STUDY = {
       guided: () => {
         const a=randInt(2,9), x=randInt(1,10), b=randInt(1,10); const c=a*x+b;
         const ans=(c-b)/a; const opts=shuffle([ans, ans+1, ans-1, ans+2]).map(String);
-        return { stem:`Resuelve: ${a}x + ${b} = ${c}`, choices:opts, answerIndex:opts.indexOf(String(ans)), explain:`${a}x=${c}-${b}=${c-b} → x=${c-b}/${a}=${ans}.` };
+        return { stem:`Resuelve: ${a}x + ${b} = ${c}`, choices:opts, answerIndex:opts.indexOf(String(ans)), explain:`Para resolver una ecuación lineal como ${a}x + ${b} = ${c}, aplicamos operaciones inversas en ambos lados. Primero restamos ${b} a ambos lados para eliminar la constante y obtener ${a}x = ${c-b}. Luego dividimos entre ${a} para aislar la incógnita y llegamos a x = ${(c-b)}/${a} = ${ans}. Comprueba sustituyendo: ${a}·${ans} + ${b} = ${c-b+ b} = ${c}, lo que confirma que el valor hallado satisface la igualdad.` };
       }
     },
     "Geometría": {
-      theory:`<h3>Pitágoras</h3><p>En un triángulo rectángulo: <i>a² + b² = c²</i> (c = hipotenusa).</p>`,
+      theory:`<h3>Pitágoras</h3><p>En un triángulo rectángulo se cumple <i>a² + b² = c²</i>, donde <i>c</i> es la hipotenusa. Esta relación surge de áreas de cuadrados construidos sobre los lados y permite calcular longitudes cuando se conocen las otras dos.</p>`,
       examples:[{title:"Ejemplo", steps:["Catetos 6 y 8","c=√(36+64)=√100=10"]}],
       guided: ()=>{
         const sets=[[3,4,5],[5,12,13],[6,8,10]]; const t=sample(sets); const [a,b,c]=t;
         const opts=shuffle([c,c+1,c-1,c+2]).map(String);
-        return {stem:`Catetos ${a} y ${b}. ¿Hipotenusa?`, choices:opts, answerIndex:opts.indexOf(String(c)), explain:`√(${a}²+${b}²)=${c}.`};
+        return {stem:`Catetos ${a} y ${b}. ¿Hipotenusa?`, choices:opts, answerIndex:opts.indexOf(String(c)), explain:`El teorema de Pitágoras indica que, en un triángulo rectángulo, la suma de los cuadrados de los catetos es igual al cuadrado de la hipotenusa. Sustituyendo: c = √(${a}² + ${b}²) = √(${a*a} + ${b*b}) = √(${a*a + b*b}) = ${c}. Esta propiedad es muy útil para estimar distancias y validar si un triángulo es rectángulo.`};
       }
     }
   },
   "Ciencias Naturales": {
     "Biología": {
-      theory:`<h3>Orgánulos</h3><p>Cloroplasto (fotosíntesis), Mitocondria (energía), Ribosoma (proteínas), Núcleo (ADN).</p>`,
+      theory:`<h3>Orgánulos</h3><p>Las células tienen estructuras especializadas: el cloroplasto capta energía luminosa para la fotosíntesis, la mitocondria transforma nutrientes en ATP en la respiración celular, los ribosomas ensamblan proteínas y el núcleo protege el ADN y regula la actividad celular.</p>`,
       examples:[{title:"Ejemplo", steps:["¿Qué hace el cloroplasto? → Fotosíntesis"]}],
       guided: ()=>{
         const pairs=[["Cloroplasto","Fotosíntesis"],["Mitocondria","Respiración celular"],["Ribosoma","Síntesis de proteínas"],["Núcleo","Almacena ADN"]];
         const [org,func]=sample(pairs); const wrong=shuffle(pairs.filter(p=>p[0]!==org).map(p=>p[1])).slice(0,3);
         const all=shuffle([func,...wrong]);
-        return {stem:`Función principal de ${org}:`, choices:all, answerIndex:all.indexOf(func), explain:`${org}: ${func}.`};
+        return {stem:`Función principal de ${org}:`, choices:all, answerIndex:all.indexOf(func), explain:`Identificar la función de un orgánulo exige relacionarlo con el proceso que lidera. El ${org} está asociado a “${func}”. Por ejemplo, los cloroplastos contienen clorofila y convierten energía lumínica en química durante la fotosíntesis; las mitocondrias generan ATP a partir de nutrientes; los ribosomas ensamblan aminoácidos en proteínas y el núcleo resguarda la información genética.`};
       }
     },
     "Química": {
-      theory:`<h3>Molaridad (M)</h3><p>M = moles de soluto / litros de solución.</p>`,
+      theory:`<h3>Molaridad (M)</h3><p>La molaridad expresa cuántos moles de soluto hay en un litro de solución: M = n/V. Es una unidad central para preparar soluciones y calcular reacciones estequiométricas de manera cuantitativa.</p>`,
       examples:[{title:"Ejemplo", steps:["2 mol en 1 L → 2 M"]}],
       guided: ()=>{
         const mol=randInt(1,3), L=randInt(1,3); const M=(mol/L).toFixed(2);
         const opts=shuffle([M,(mol/(L+1)).toFixed(2),(mol/(L+2)).toFixed(2),(mol/(L+0.5)).toFixed(2)]);
-        return {stem:`${mol} mol en ${L} L. ¿M?`, choices:opts, answerIndex:opts.indexOf(String(M)), explain:`M=n/V=${mol}/${L}=${M}.`};
+        return {stem:`${mol} mol en ${L} L. ¿M?`, choices:opts, answerIndex:opts.indexOf(String(M)), explain:`La molaridad es la cantidad de soluto por litro de solución. Si tenemos ${mol} mol distribuidos uniformemente en ${L} L, la concentración es M = n/V = ${mol}/${L} = ${M} M. Esta medida permite comparar soluciones y predecir cantidades que reaccionarán según proporciones establecidas por las ecuaciones químicas.`};
       }
     }
   },
   "Sociales": {
     "Historia de Colombia": {
-      theory:`<h3>Fechas clave</h3><ul><li>1810: inicio del proceso de independencia.</li><li>1819: Batalla de Boyacá.</li><li>1821: Constitución de Cúcuta, Gran Colombia.</li></ul>`,
+      theory:`<h3>Fechas clave</h3><ul><li>1810: inicio del proceso de independencia.</li><li>1819: Batalla de Boyacá.</li><li>1821: Constitución de Cúcuta y consolidación de la Gran Colombia.</li></ul>`,
       examples:[{title:"Ejemplo", steps:["¿Qué ocurrió en 1819? → Boyacá"]}],
       guided: ()=>{
         const items=[["1810","inicio proceso de independencia"],["1819","Batalla de Boyacá"],["1821","Constitución de Cúcuta"]];
         const [anio,desc]=sample(items); const opts=shuffle([anio,"1816","1830","1849"]);
-        return {stem:`Año asociado a: ${desc}`, choices:opts, answerIndex:opts.indexOf(anio), explain:`${desc} ↔ ${anio}.`};
+        return {stem:`Año asociado a: ${desc}`, choices:opts, answerIndex:opts.indexOf(anio), explain:`Relacionar procesos históricos con fechas ayuda a entender la secuencia de eventos. El ${desc} se vincula con ${anio}, parte de un periodo en el que se consolidan proyectos políticos y militares que dan forma al Estado moderno y a su ordenamiento jurídico.`};
       }
     },
     "Geografía": {
-      theory:`<h3>Ríos principales</h3><p>Magdalena, Cauca, Orinoco, Amazonas (en frontera), Putumayo…</p>`,
+      theory:`<h3>Ríos principales</h3><p>El Magdalena organiza gran parte de la vida económica y cultural del país. Otros ríos importantes son el Cauca, Orinoco, Amazonas (frontera) y Putumayo, cada uno con cuencas de relevancia ecológica y productiva.</p>`,
       examples:[{title:"Ejemplo", steps:["Más largo de Colombia → Magdalena"]}],
       guided: ()=>{
         const correct="Magdalena"; const opts=shuffle([correct,"Cauca","Putumayo","Orinoco"]);
-        return {stem:`Río más largo de Colombia`, choices:opts, answerIndex:opts.indexOf(correct), explain:`Magdalena.`};
+        return {stem:`Río más largo de Colombia`, choices:opts, answerIndex:opts.indexOf(correct), explain:`El río Magdalena es el más largo del país y articuló durante siglos rutas de comercio y poblamiento. Su cuenca integra numerosos afluentes y ecosistemas, por lo que identificarlo correctamente permite ubicar procesos históricos, económicos y ambientales clave para Colombia.`};
       }
     }
   },
   "Lectura Crítica": {
     "Idea principal": {
-      theory:`<h3>Idea principal</h3><p>Resume en una oración qué quiere comunicar el texto.</p>`,
+      theory:`<h3>Idea principal</h3><p>La idea principal condensa en una oración el mensaje central de un texto. Para hallarla, identifica: tema, actitud del autor y oración con mayor generalidad y cohesión respecto del resto.</p>`,
       examples:[{title:"Ejemplo", steps:["Texto sobre abejas → Idea: su papel clave en polinización."]}],
       guided: ()=>{
         const a=sample(["abejas","manglares","bosques urbanos"]); const b=a==="abejas"?"polinización":(a==="manglares"?"costas":"temperatura");
         const p=`Los ${a} son esenciales para la ${b}.`;
         const correct=`Los ${a} son esenciales para la ${b}.`;
         const opts=shuffle([correct,`Se critica a los ${a}.`,`Son irrelevantes.`,`Solo importan en laboratorios.`]);
-        return {stem:`Texto: “${p}” ¿Idea principal?`, choices:opts, answerIndex:opts.indexOf(correct), explain:`Resume el aporte central.`};
+        return {stem:`Texto: “${p}” ¿Idea principal?`, choices:opts, answerIndex:opts.indexOf(correct), explain:`La oración que mejor resume el hilo argumental es la que integra el tema y la valoración del autor: “Los ${a} son esenciales para la ${b}”. Las alternativas restantes distorsionan el tono o niegan la relevancia indicada por el texto.`};
       }
     }
   },
   "Inglés": {
     "Vocabulary": {
-      theory:`<h3>Synonyms</h3><p>Words with similar meanings: reliable≈trustworthy.</p>`,
+      theory:`<h3>Synonyms</h3><p>Un sinónimo expresa una idea cercana en otro término. Elegir el mejor depende del contexto: “reliable” encaja con “trustworthy”, especialmente cuando describe a una persona o fuente en la que se puede confiar.</p>`,
       examples:[{title:"Ejemplo", steps:["smart ≈ intelligent"]}],
       guided: ()=>{
         const pairs=[["reliable","trustworthy"],["quick","rapid"],["smart","intelligent"],["tiny","small"]];
         const [w,syn]=sample(pairs); const wrong=shuffle(pairs.filter(p=>p[0]!==w).map(p=>p[1])).slice(0,3);
         const all=shuffle([syn,...wrong]);
-        return {stem:`Best synonym for “${w}”:`, choices:all, answerIndex:all.indexOf(syn), explain:`“${w}” ≈ “${syn}”.`};
+        return {stem:`Best synonym for “${w}”:`, choices:all, answerIndex:all.indexOf(syn), explain:`Para seleccionar sinónimos considera uso y matiz: “${w}” se aproxima a “${syn}”, pues ambos describen una cualidad equivalente en registros comunes. Otras opciones pertenecen a campos semánticos distintos o no encajan en el contexto general.`};
       }
     }
   }
 };
 
-/* ================== PREGUNTAS (fijas + plantillas) ================== */
+/* ================== PREGUNTAS (fijas + plantillas con explicaciones amplias) ================== */
 const FIXED_QUESTIONS = [
-  {id:"m-alg-1", subject:"Matemáticas", topic:"Álgebra", stem:"Si 3x + 2 = 20, ¿cuánto vale x?", choices:["4","5","6","7"], answerIndex:2, difficulty:0.30, explain:"3x = 18 → x = 6."},
-  {id:"m-geo-1", subject:"Matemáticas", topic:"Geometría", stem:"Un triángulo rectángulo tiene catetos 3 y 4. ¿Hipotenusa?", choices:["4","5","6","7"], answerIndex:1, difficulty:0.30, explain:"√(3²+4²)=5."},
-  {id:"c-q-1", subject:"Ciencias Naturales", topic:"Química", stem:"¿Cuál es la masa molar aproximada del H₂O?", choices:["18 g/mol","16 g/mol","20 g/mol","14 g/mol"], answerIndex:0, difficulty:0.25, explain:"2×1 + 16 ≈ 18 g/mol."},
-  {id:"lc-inf-1", subject:"Lectura Crítica", topic:"Inferencias", stem:"El autor 'lamenta el deterioro ambiental'. Inferir que apoya políticas de protección se basa en…", choices:["Afirmación explícita","Dato","Implicatura razonable","Falacia"], answerIndex:2, difficulty:0.40, explain:"Se deduce del tono."},
-  {id:"en-v-1", subject:"Inglés", topic:"Vocabulary", stem:"Choose the best synonym for 'reliable':", choices:["trustworthy","fragile","temporary","careless"], answerIndex:0, difficulty:0.30, explain:"'reliable'≈'trustworthy'."},
-  {id:"soc-his-1", subject:"Sociales", topic:"Historia de Colombia", stem:"¿En qué batalla se selló la independencia en 1819?", choices:["Boyacá","Ayacucho","Chacabuco","Junín"], answerIndex:0, difficulty:0.35, explain:"Boyacá fue decisiva."}
+  {id:"m-alg-1", subject:"Matemáticas", topic:"Álgebra",
+   stem:"Si 3x + 2 = 20, ¿cuánto vale x?",
+   choices:["4","5","6","7"], answerIndex:2, difficulty:0.30,
+   explain:"Para resolver 3x + 2 = 20, aplicamos el principio de mantener la igualdad realizando la misma operación en ambos lados. Restamos 2 y obtenemos 3x = 18. Luego dividimos por 3 para aislar la incógnita: x = 6. Una verificación rápida consiste en sustituir x = 6 en la expresión inicial: 3·6 + 2 = 18 + 2 = 20. Esta comprobación confirma que el valor hallado satisface completamente la ecuación."
+  },
+  {id:"m-geo-1", subject:"Matemáticas", topic:"Geometría",
+   stem:"Un triángulo rectángulo tiene catetos 3 y 4. ¿Hipotenusa?",
+   choices:["4","5","6","7"], answerIndex:1, difficulty:0.30,
+   explain:"El teorema de Pitágoras señala que, en todo triángulo rectángulo, la suma de los cuadrados de los catetos es igual al cuadrado de la hipotenusa: c² = a² + b². Sustituyendo: c² = 3² + 4² = 9 + 16 = 25. Al extraer la raíz cuadrada, c = √25 = 5. Este resultado es un caso clásico que ilustra la relación entre lados y es útil para validar medidas o planear trazos perpendiculares con precisión."
+  },
+  {id:"c-q-1", subject:"Ciencias Naturales", topic:"Química",
+   stem:"¿Cuál es la masa molar aproximada del H₂O?",
+   choices:["18 g/mol","16 g/mol","20 g/mol","14 g/mol"], answerIndex:0, difficulty:0.25,
+   explain:"Para calcular la masa molar del agua, sumamos los aportes atómicos: el hidrógeno tiene masa atómica cercana a 1 g/mol y aparecen dos átomos (2×1 = 2). El oxígeno contribuye con ~16 g/mol. La suma total es 2 + 16 = 18 g/mol. Este valor es fundamental para convertir entre cantidad de sustancia (moles) y masa en reacciones químicas y preparaciones de soluciones."
+  },
+  {id:"lc-inf-1", subject:"Lectura Crítica", topic:"Inferencias",
+   stem:"El autor 'lamenta el deterioro ambiental'. Inferir que apoya políticas de protección se basa en…",
+   choices:["Afirmación explícita","Dato","Implicatura razonable","Falacia"], answerIndex:2, difficulty:0.40,
+   explain:"La conclusión de que el autor apoya políticas de protección no está enunciada de forma literal, sino que se deduce del tono y la valoración expresada por el verbo “lamenta”. Esta es una implicatura razonable: el lamento por el deterioro sugiere preferencia por acciones que lo mitiguen. Distinguir entre lo dicho y lo implicado es clave para una lectura crítica sólida."
+  },
+  {id:"en-v-1", subject:"Inglés", topic:"Vocabulary",
+   stem:"Choose the best synonym for 'reliable':",
+   choices:["trustworthy","fragile","temporary","careless"], answerIndex:0, difficulty:0.30,
+   explain:"“Reliable” describe algo o alguien en quien se puede confiar de manera consistente. Por ello, “trustworthy” es el sinónimo que mejor conserva el matiz de confiabilidad. Las otras opciones reflejan fragilidad, temporalidad o descuido, ideas que no se alinean con el significado del término en contextos cotidianos."
+  },
+  {id:"soc-his-1", subject:"Sociales", topic:"Historia de Colombia",
+   stem:"¿En qué batalla se selló la independencia en 1819?",
+   choices:["Boyacá","Ayacucho","Chacabuco","Junín"], answerIndex:0, difficulty:0.35,
+   explain:"La Batalla de Boyacá (7 de agosto de 1819) es considerada decisiva en la Campaña Libertadora. Su desenlace aceleró la caída del dominio realista en Nueva Granada y abrió la puerta a la consolidación institucional posterior. Identificar esta fecha y lugar permite ubicar un hito central del proceso independentista colombiano."
+  }
 ];
 
 const TEMPLATES = [
-  // Matemáticas
   {subject:"Matemáticas", topic:"Álgebra", difficulty:0.30, build:()=>{
     let a,b,c,x; for(let i=0;i<50;i++){ a=randInt(2,9); b=randInt(1,15); x=randInt(1,15); c=a*x+b; if((c-b)%a===0) break; }
     const ans=(c-b)/a, opts=shuffle([ans, ans+1, ans-1, ans+2]).map(String);
-    return {stem:`Si ${a}x + ${b} = ${c}, ¿x = ?`, choices:opts, answerIndex:opts.indexOf(String(ans)), explain:`${a}x=${c}-${b}=${c-b} → x=${c-b}/${a}=${ans}.`};
+    const explain = `Para resolver ${a}x + ${b} = ${c}, usamos operaciones inversas manteniendo la igualdad. Primero restamos ${b} a ambos lados para eliminar la constante y obtenemos ${a}x = ${c-b}. Luego dividimos entre ${a} para aislar la incógnita: x = ${(c-b)}/${a} = ${ans}. Verificamos sustituyendo el valor en la ecuación original y comprobando que ${a}·${ans} + ${b} = ${c}. Este método funciona para cualquier ecuación lineal y es la base de procedimientos más complejos como sistemas de ecuaciones. Además, conviene revisar mentalmente que el resultado tenga sentido (por ejemplo, si ${a}x es un número cercano a ${c}, x debe ser del orden de ${(c/a).toFixed(1)}).`;
+    return {stem:`Si ${a}x + ${b} = ${c}, ¿cuánto vale x?`, choices:opts, answerIndex:opts.indexOf(String(ans)), explain};
+  }},
+  {subject:"Matemáticas", topic:"Álgebra", difficulty:0.45, build:()=>{
+    const x=randInt(1,9), y=randInt(1,9);
+    const a=randInt(1,5), b=randInt(1,5), c=randInt(1,5), d=randInt(1,5);
+    const s1=a*x + b*y, s2=c*x + d*y;
+    const ask = sample(["x","y"]); const correct = (ask==="x")? x : y;
+    const opts = shuffle([correct, correct+1, correct-1, correct+2]).map(String);
+    const explain = `El sistema ${a}x + ${b}y = ${s1} y ${c}x + ${d}y = ${s2} fue construido para que su solución exacta sea (x,y)=(${x},${y}). Puedes resolverlo por sustitución (despejando una variable y reemplazándola en la otra ecuación) o por eliminación (multiplicando y sumando/restando para anular una incógnita). Al resolverlo correctamente, obtendrías ${ask} = ${correct}. Verificar reemplazando en ambas ecuaciones garantiza que no hubo errores de cálculo.`;
+    return {stem:`Resuelve el sistema: ${a}x + ${b}y = ${s1}; ${c}x + ${d}y = ${s2}. ¿${ask}=?`, choices:opts, answerIndex:opts.indexOf(String(correct)), explain};
   }},
   {subject:"Matemáticas", topic:"Geometría", difficulty:0.30, build:()=>{
-    const sets=[[3,4,5],[5,12,13],[6,8,10]]; const t=sample(sets); const [a,b,c]=t;
-    const opts=shuffle([c,c+1,c-1,c+2]).map(String);
-    return {stem:`Catetos ${a} y ${b}. ¿Hipotenusa?`, choices:opts, answerIndex:opts.indexOf(String(c)), explain:`√(${a}²+${b}²)=${c}.`};
+    const sets=[[3,4,5],[5,12,13],[6,8,10],[8,15,17],[9,12,15]]; const t=sample(sets);
+    const [c1,c2,h]=t; const opts=shuffle([h,h+1,h-1,h+2]).map(String);
+    const explain = `En triángulos rectángulos, la hipotenusa se obtiene como la raíz cuadrada de la suma de catetos al cuadrado: c = √(a² + b²). Con a=${c1} y b=${c2}, c=√(${c1*c1} + ${c2*c2}) = ${h}. Las ternas pitagóricas como (${c1},${c2},${h}) simplifican el cálculo sin necesidad de calculadora y son útiles para construir triángulos rectos en problemas geométricos o de construcción.`;
+    return { stem:`Triángulo rectángulo con catetos ${c1} y ${c2}. ¿Hipotenusa?`, choices:opts, answerIndex:opts.indexOf(String(h)), explain };
   }},
   {subject:"Matemáticas", topic:"Probabilidad", difficulty:0.30, build:()=>{
-    const ask=sample(["par","múltiplo de 3","mayor que 4"]); let correct; if(ask==="par") correct="1/2"; else if(ask==="múltiplo de 3") correct="1/3"; else correct="1/3";
+    const ask=sample(["par","múltiplo de 3","mayor que 4"]);
+    let correct; if(ask==="par") correct="1/2"; else if(ask==="múltiplo de 3") correct="1/3"; else correct="1/3";
     const opts=shuffle([correct,"1/6","2/3","5/6"]);
-    return {stem:`Dado honesto: prob. de ${ask}`, choices:opts, answerIndex:opts.indexOf(correct), explain:`Espacio=6.`};
+    const explain = `Con un dado justo hay 6 resultados equiprobables. Para “par” (2,4,6) hay 3 casos favorables → 3/6 = 1/2. Para “múltiplo de 3” (3,6) hay 2 casos → 2/6 = 1/3. Para “mayor que 4” (5,6) también hay 2 casos → 1/3. El enfoque correcto es identificar el espacio muestral, contar los casos favorables y simplificar la fracción; este razonamiento es la base de problemas más complejos.`;
+    return { stem:`Se lanza un dado. Probabilidad de obtener un número ${ask}.`, choices:opts, answerIndex:opts.indexOf(correct), explain };
   }},
-  // Ciencias
+  {subject:"Matemáticas", topic:"Funciones", difficulty:0.40, build:()=>{
+    const x1=randInt(-5,5), y1=randInt(-5,5), x2=randInt(1,9), y2=randInt(-5,5);
+    const m = (y2 - y1) / (x2 - x1);
+    const m2 = ((y2 - y1) + 1) / (x2 - x1);
+    const m3 = (y2 - y1) / (x2 - x1 + 1);
+    const opts = shuffle([m, m2, m3, m+1]).map(v=>String(Number(v.toFixed(2))));
+    const correct = String(Number(m.toFixed(2)));
+    const explain = `La pendiente mide el cambio vertical por unidad de cambio horizontal entre dos puntos. Con (${x1},${y1}) y (${x2},${y2}), m=(y₂−y₁)/(x₂−x₁) = ${correct}. Una pendiente positiva indica crecimiento; negativa, decrecimiento; cero, horizontal. Redondeamos a dos decimales para facilitar la lectura y comparamos con opciones cercanas para evitar confusiones.`;
+    return { stem:`Pendiente de la recta que une (${x1},${y1}) y (${x2},${y2}).`, choices:opts, answerIndex:opts.indexOf(correct), explain };
+  }},
   {subject:"Ciencias Naturales", topic:"Química", difficulty:0.35, build:()=>{
-    const mol=randInt(1,3), L=randInt(1,3); const M=(mol/L).toFixed(2);
-    const opts=shuffle([M,(mol/(L+1)).toFixed(2),(mol/(L+2)).toFixed(2),(mol/(L+0.5)).toFixed(2)]);
-    return {stem:`${mol} mol en ${L} L. ¿M?`, choices:opts, answerIndex:opts.indexOf(String(M)), explain:`M=n/V=${mol}/${L}=${M}.`};
+    const mol=randInt(1,3), L=randInt(1,3);
+    const M = (mol/L).toFixed(2);
+    const opts = shuffle([M, (mol/(L+1)).toFixed(2), (mol/(L+2)).toFixed(2), (mol/(L+0.5)).toFixed(2)]);
+    const explain = `La molaridad cuantifica la concentración como moles por litro: M=n/V. Si tenemos ${mol} moles en ${L} litros, M=${mol}/${L}=${M} M. Esta unidad permite escalar recetas químicas y calcular rendimientos. Por ejemplo, duplicar el volumen a igual número de moles reduce a la mitad la concentración, y viceversa.`;
+    return { stem:`Una disolución tiene ${mol} mol de soluto en ${L} L. ¿Molaridad (M)?`, choices:opts, answerIndex:opts.indexOf(String(M)), explain };
+  }},
+  {subject:"Ciencias Naturales", topic:"Química", difficulty:0.40, build:()=>{
+    const x=randInt(1,4), y=2*randInt(1,4); const o2=x+y/4;
+    const opts=shuffle([o2, o2+0.5, o2-0.5, o2+1]).map(v=>String(v));
+    const explain = `Al balancear la combustión de C${x}H${y} con oxígeno para formar CO₂ y H₂O, el coeficiente de O₂ resulta de empatar átomos de O en productos: se necesitan x moléculas de CO₂ (aportan 2x oxígenos) y y/2 moléculas de H₂O (aportan y oxígenos), en total 2x + (y/2). Como cada O₂ aporta 2 oxígenos, el coeficiente es (2x + y/2)/2 = x + y/4. Este atajo evita tanteos extensos.`;
+    return { stem:`En la combustión de C${x}H${y}, ¿coeficiente de O₂ al balancear?`, choices:opts, answerIndex:opts.indexOf(String(o2)), explain };
   }},
   {subject:"Ciencias Naturales", topic:"Biología", difficulty:0.30, build:()=>{
     const pairs=[["Cloroplasto","Fotosíntesis"],["Mitocondria","Respiración celular"],["Ribosoma","Síntesis de proteínas"],["Núcleo","Almacena ADN"]];
     const [org,func]=sample(pairs); const wrong=shuffle(pairs.filter(p=>p[0]!==org).map(p=>p[1])).slice(0,3);
     const all=shuffle([func,...wrong]);
-    return {stem:`Función de ${org}`, choices:all, answerIndex:all.indexOf(func), explain:`${org}: ${func}.`};
+    const explain = `Cada orgánulo cumple una función específica que garantiza el equilibrio celular. El ${org} se asocia a “${func}”. Por ejemplo, los ribosomas leen el ARN mensajero para ensamblar proteínas; la mitocondria convierte energía química de nutrientes en ATP; el núcleo coordina la expresión genética y los cloroplastos transforman luz en glucosa y oxígeno. Distinguirlas facilita comprender procesos como crecimiento, reparación y metabolismo.`;
+    return { stem:`¿Cuál es la función principal de ${org}?`, choices:all, answerIndex:all.indexOf(func), explain };
   }},
-  // Lectura e Inglés
+  {subject:"Ciencias Naturales", topic:"Ecología", difficulty:0.28, build:()=>{
+    const correct="Productores"; const opts=shuffle([correct,"Consumidores primarios","Descomponedores","Consumidores terciarios"]);
+    const explain = `En una cadena trófica, los productores (plantas y algas) transforman energía solar en biomasa mediante fotosíntesis, sirviendo de base energética para el resto de niveles. Los consumidores primarios se alimentan de ellos, y así sucesivamente. Reconocer el papel de los productores ayuda a entender el flujo de energía en los ecosistemas y las consecuencias de su disminución.`;
+    return { stem:`En una cadena trófica, ¿quiénes capturan energía solar directamente?`, choices:opts, answerIndex:opts.indexOf(correct), explain };
+  }},
   {subject:"Lectura Crítica", topic:"Idea principal", difficulty:0.35, build:()=>{
-    const a=sample(["abejas","manglares","bosques urbanos"]); const b=a==="abejas"?"polinización":(a==="manglares"?"costas":"temperatura");
-    const p=`Los ${a} son esenciales para la ${b}.`; const correct=p;
-    const opts=shuffle([correct,`Se critican los ${a}.`,`No influyen en la ${b}.`,`Solo importan en laboratorios.`]);
-    return {stem:`Texto: “${p}” ¿Idea principal?`, choices:opts, answerIndex:opts.indexOf(correct), explain:`Resume el aporte central.`};
+    const animals=[["abejas","polinización"],["manglares","costas"],["bosques urbanos","temperatura de ciudades"]];
+    const [a,benef]=sample(animals);
+    const p=`Los ${a} cumplen un papel clave; sin ellos, diversos sistemas se ven afectados. Estudios recientes muestran que su presencia favorece la ${benef}.`;
+    const correct=`La presencia de ${a} es clave porque favorece la ${benef}.`;
+    const opts=shuffle([correct,`El texto critica a los ${a}.`,`Los ${a} no influyen en la ${benef}.`,`Solo importan en laboratorios.`]);
+    const explain = `La idea principal resume el mensaje global del pasaje, no un detalle menor. El texto establece el valor de los ${a} y su relación positiva con la ${benef}, por lo que la opción correcta formula esa síntesis. Alternativas que niegan la influencia o atribuyen una crítica no reflejan el contenido ni el tono del fragmento.`;
+    return { stem:`Lee: “${p}” ¿Cuál es la idea principal?`, choices:opts, answerIndex:opts.indexOf(correct), explain };
+  }},
+  {subject:"Lectura Crítica", topic:"Conectores", difficulty:0.30, build:()=>{
+    const s1="La ciudad invirtió en ciclorrutas;"; const s2="___, el uso de la bicicleta aumentó.";
+    const correct="por ello"; const opts=shuffle([correct,"sin embargo","aunque","a pesar de"]);
+    const explain = `Los conectores cohesionan ideas según la relación lógica. Si la primera oración expresa una causa (inversión en ciclorrutas), la segunda describe la consecuencia (aumento de uso). “Por ello” enlaza causa–efecto. “Sin embargo”, “aunque” y “a pesar de” introducen contraste, lo que contradice el sentido del enunciado.`;
+    return { stem:`Completa con el conector adecuado: "${s1} ${s2}"`, choices:opts, answerIndex:opts.indexOf(correct), explain };
   }},
   {subject:"Inglés", topic:"Vocabulary", difficulty:0.30, build:()=>{
-    const pairs=[["reliable","trustworthy"],["quick","rapid"],["smart","intelligent"],["tiny","small"]];
+    const pairs=[["reliable","trustworthy"],["quick","rapid"],["smart","intelligent"],["tiny","small"],["brave","courageous"]];
     const [w,syn]=sample(pairs); const wrong=shuffle(pairs.filter(p=>p[0]!==w).map(p=>p[1])).slice(0,3);
     const all=shuffle([syn,...wrong]);
-    return {stem:`Best synonym for “${w}”`, choices:all, answerIndex:all.indexOf(syn), explain:`“${w}”≈“${syn}”.`};
+    const explain = `“${w}” y “${syn}” comparten significado central en la mayoría de contextos. Elegir sinónimos exige evaluar cercanía semántica y registro; por ejemplo, “quick/rapid” denotan velocidad, mientras que “reliable/trustworthy” aluden a confiabilidad. La opción correcta mantiene el matiz clave del enunciado.`;
+    return { stem:`Choose the best synonym for “${w}”.`, choices:all, answerIndex:all.indexOf(syn), explain };
   }},
-  // Sociales
+  {subject:"Inglés", topic:"Reading", difficulty:0.35, build:()=>{
+    const place=sample(["the library","the park","the museum"]);
+    const p=`Tom visits ${place} on weekends to study and relax. He prefers quiet places.`;
+    const correct="He likes quiet places.";
+    const opts=shuffle([correct,"He hates weekends","He works there","He never studies"]);
+    const explain = `Del texto inferimos preferencias del personaje: “prefers quiet places” implica que le gustan los lugares tranquilos, por eso la opción correcta sintetiza esa información implícita/explicita. Las otras alternativas contradicen el pasaje o añaden datos no mencionados.`;
+    return { stem:`Read: “${p}” What can we infer?`, choices:opts, answerIndex:opts.indexOf(correct), explain };
+  }},
   {subject:"Sociales", topic:"Historia de Colombia", difficulty:0.35, build:()=>{
-    const items=[["1810","inicio proceso de independencia"],["1819","Boyacá"],["1821","Constitución de Cúcuta"]];
-    const [anio,desc]=sample(items); const opts=shuffle([anio,"1816","1830","1849"]);
-    return {stem:`Año de ${desc}`, choices:opts, answerIndex:opts.indexOf(anio), explain:`${desc} ↔ ${anio}.`};
+    const items=[["1810","inicio proceso de independencia"],["1819","batalla decisiva de Boyacá"],["1821","Constitución de Cúcuta/Gran Colombia"]];
+    const [anio,desc]=sample(items);
+    const correct=anio; const opts=shuffle([anio, ...shuffle(items.filter(i=>i[0]!==anio).map(i=>i[0])).slice(0,3)]);
+    const explain = `Asociar fechas con eventos permite ordenar procesos históricos. El hito “${desc}” corresponde a ${anio}, dentro de la secuencia que va del inicio del proceso emancipador a su consolidación político-institucional. Esta vinculación temporal ayuda a contextualizar causas y consecuencias.`;
+    return { stem:`¿Qué año se asocia principalmente con: ${desc}?`, choices:opts, answerIndex:opts.indexOf(correct), explain };
+  }},
+  {subject:"Sociales", topic:"Geografía", difficulty:0.28, build:()=>{
+    const correct="Magdalena"; const opts=shuffle([correct,"Cauca","Putumayo","Orinoco"]);
+    const explain = `El Magdalena es el río más largo de Colombia y eje histórico del transporte fluvial y del poblamiento. Conocer su primacía facilita interpretar mapas, redes comerciales y dinámicas ambientales. Otras cuencas son claves regionalmente, pero no superan su longitud en el territorio nacional.`;
+    return { stem:`¿Cuál es el río más largo de Colombia?`, choices:opts, answerIndex:opts.indexOf(correct), explain };
   }}
 ];
 
-/* ================== PERFILES, TEMA Y ESTADÍSTICAS ================== */
+/* ================== PERFILES, THEME, PUNTOS ================== */
 function setTheme(u){ document.documentElement.setAttribute('data-theme', u); }
 function pointsKey(u){ return `points:${u}`; }
 function getPoints(u){ return parseInt(localStorage.getItem(pointsKey(u))||"0",10); }
 function addPoints(u,delta){ const p=getPoints(u)+delta; localStorage.setItem(pointsKey(u), String(p)); return p; }
 function setActiveUser(u){ localStorage.setItem("activeUser", u); setTheme(u); }
 function getActiveUser(){ return localStorage.getItem("activeUser") || null; }
-
-function abilityKey(u,s,t){ return `ability:${u}:${s}:${t}`; }
-function statsKey(u,s,t){ return `stats:${u}:${s}:${t}`; }
-function abilityGet(u,s,t){ const v=localStorage.getItem(abilityKey(u,s,t)); return v?parseFloat(v):0.30; }
-function abilitySet(u,s,t,val){ localStorage.setItem(abilityKey(u,s,t), String(clamp(val,0.05,0.95))); }
-function statsGet(u,s,t){ const v=localStorage.getItem(statsKey(u,s,t)); return v?JSON.parse(v):{seen:0,right:0,wrong:0}; }
-function statsSet(u,s,t,st){ localStorage.setItem(statsKey(u,s,t), JSON.stringify(st)); }
 
 /* ================== PIN (contraseña) ================== */
 function pinKey(u){ return `pin:${u}`; }
@@ -436,20 +501,10 @@ function enterWithPIN(user, inputId){
   showSection('study');
 }
 
-/* ================== SECCIONES (Navegación) ================== */
-const sections = {
-  study: "#studyView",
-  practice: "#practiceView",
-  exam: "#examView",
-  daily: "#dailyView",
-  history: "#historyView",
-  badges: "#badgesView"
-};
+/* ================== NAVEGACIÓN ================== */
+const sections = { study:"#studyView", practice:"#practiceView", exam:"#examView", daily:"#dailyView", history:"#historyView", badges:"#badgesView"};
 function showSection(name){
-  for(const k in sections){
-    const el = $(sections[k]);
-    if(k===name) el.classList.remove("hidden"); else el.classList.add("hidden");
-  }
+  for(const k in sections){ const el=$(sections[k]); (k===name)?el.classList.remove("hidden"):el.classList.add("hidden"); }
   $("#navStudy").classList.toggle("active", name==='study');
   $("#navPractice").classList.toggle("active", name==='practice');
   $("#navExam").classList.toggle("active", name==='exam');
@@ -463,21 +518,8 @@ $("#navExam").onclick = ()=>showSection('exam');
 $("#navDaily").onclick = ()=>showDaily();
 $("#navHistory").onclick = ()=>showHistory();
 $("#navBadges").onclick = ()=>renderBadges();
-
-function logout(){
-  localStorage.removeItem("activeUser");
-  $("#appView").classList.add("hidden");
-  $("#loginView").classList.remove("hidden");
-  renderHomeScores();
-}
-
-/* ================== HOME scores ================== */
-function renderHomeScores(){
-  $("#albaPoints").textContent = getPoints("Alba");
-  $("#laraPoints").textContent = getPoints("Lara");
-  $("#albaBadgesCount").textContent = getAllBadges("Alba").length;
-  $("#laraBadgesCount").textContent = getAllBadges("Lara").length;
-}
+function logout(){ localStorage.removeItem("activeUser"); $("#appView").classList.add("hidden"); $("#loginView").classList.remove("hidden"); renderHomeScores(); }
+function renderHomeScores(){ $("#albaPoints").textContent=getPoints("Alba"); $("#laraPoints").textContent=getPoints("Lara"); $("#albaBadgesCount").textContent=getAllBadges("Alba").length; $("#laraBadgesCount").textContent=getAllBadges("Lara").length; }
 
 /* ================== SUBJECT/TOPIC helpers ================== */
 function subjects(){
@@ -518,7 +560,6 @@ function renderStudy(){
     ex.classList.remove("hidden");
     ex.innerHTML = `<h4>Ejemplos resueltos</h4>` + block.examples.map(e=>`<div class="card"><b>${e.title}</b><ol class="small">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>`).join('');
   }else ex.classList.add("hidden");
-  // Guided question
   const g=block.guided && block.guided();
   if(g){
     sq.classList.remove("hidden");
@@ -566,6 +607,7 @@ function initPracticeSelectors(){
   };
 }
 function onTopicChange(){ const u=getActiveUser(), s=subjectSel.value, t=topicSel.value; renderStats(u,s,t); nextQuestion(); }
+
 function renderStats(u,subject,topic){
   const st=statsGet(u,subject,topic), ability=abilityGet(u,subject,topic);
   $("#stats").innerHTML = `
@@ -584,14 +626,14 @@ function templatesBy(subject,topic){
   return TEMPLATES.filter(t=>t.subject===subject && t.topic===topic);
 }
 function buildFromTemplate(subject,topic){
-  const c=templatesBy(subject,topic); if(!c.length) return null;
-  const t=sample(c); const b=t.build();
-  return { id:`gen-${subject}-${topic}-${Date.now()}-${Math.floor(Math.random()*1e6)}`, subject, topic, difficulty:t.difficulty, stem:b.stem, choices:b.choices, answerIndex:b.answerIndex, explain:b.explain, generated:true };
+  const c=templatesBy(subject,topic); if(c.length){ const t=sample(c); const b=t.build(); return { id:`gen-${subject}-${topic}-${Date.now()}-${Math.floor(Math.random()*1e6)}`, subject, topic, difficulty:t.difficulty, stem:b.stem, choices:b.choices, answerIndex:b.answerIndex, explain:b.explain, generated:true }; }
+  const any = TEMPLATES.filter(t=>t.subject===subject);
+  if(any.length){ const t=sample(any); const b=t.build(); return { id:`gen-${subject}-${t.topic}-${Date.now()}-${Math.floor(Math.random()*1e6)}`, subject, topic:t.topic, difficulty:t.difficulty, stem:b.stem, choices:b.choices, answerIndex:b.answerIndex, explain:b.explain, generated:true, fallback:true }; }
+  const t=sample(TEMPLATES); const b=t.build(); return { id:`gen-${t.subject}-${t.topic}-${Date.now()}-${Math.floor(Math.random()*1e6)}`, subject:t.subject, topic:t.topic, difficulty:t.difficulty, stem:b.stem, choices:b.choices, answerIndex:b.answerIndex, explain:b.explain, generated:true, fallback:true };
 }
-// 60% plantilla
 function pickNext(u,subject,topic){
   const ability = abilityGet(u,subject,topic);
-  let useTemplate = Math.random()<0.60 || bankBy(subject,topic).length===0;
+  let useTemplate = true;
   if(useTemplate){ const g=buildFromTemplate(subject,topic); if(g) return g; }
   const bank=bankBy(subject,topic);
   if(!bank.length) return buildFromTemplate(subject,topic);
@@ -600,9 +642,11 @@ function pickNext(u,subject,topic){
   return {...best};
 }
 function renderQuestion(q){
-  $("#meta").textContent = `${q.subject} • ${q.topic} • dif ${(q.difficulty??0.3).toFixed(2)}${q.generated?' • generada':''}`;
+  $("#meta").textContent = `${q.subject} • ${q.topic} • dif ${(q.difficulty??0.3).toFixed(2)}${q.generated?' • generada':''}${q.fallback?' • (sugerido)':''}`;
   $("#question").textContent = q.stem;
   $("#result").className = "result hidden"; $("#result").textContent="";
+  $("#similar").classList.add("hidden");
+  $("#next").classList.add("hidden");
   const opts=$("#options"); opts.innerHTML="";
   $("#explanation").classList.add("hidden"); $("#explanation").innerHTML="";
   current=q;
@@ -615,38 +659,45 @@ function renderQuestion(q){
 }
 function nextQuestion(){
   const u=getActiveUser(), s=subjectSel.value, t=topicSel.value;
-  const q = pickNext(u,s,t); if(!q){ alert("No hay preguntas para este tema todavía."); return; }
-  renderQuestion(q);
+  const q = pickNext(u,s,t); renderQuestion(q);
 }
 $("#similar").onclick = ()=>{
-  const s=subjectSel.value, t=topicSel.value;
-  const g=buildFromTemplate(s,t); if(!g){ alert("No hay plantilla para este tema."); return; }
+  const s=subjectSel.value, t=subjectSel.value?topicSel.value:null;
+  const g=buildFromTemplate(s, t||"");
   renderQuestion(g);
 };
 $("#next").onclick = nextQuestion;
+
+function abilityKey(u,s,t){ return `ability:${u}:${s}:${t}`; }
+function statsKey(u,s,t){ return `stats:${u}:${s}:${t}`; }
+function abilityGet(u,s,t){ const v=localStorage.getItem(abilityKey(u,s,t)); return v?parseFloat(v):0.30; }
+function abilitySet(u,s,t,val){ localStorage.setItem(abilityKey(u,s,t), String(clamp(val,0.05,0.95))); }
+function statsGet(u,s,t){ const v=localStorage.getItem(statsKey(u,s,t)); return v?JSON.parse(v):{seen:0,right:0,wrong:0}; }
+function statsSet(u,s,t,st){ localStorage.setItem(statsKey(u,s,t), JSON.stringify(st)); }
+
 function selectOption(index){
   const u=getActiveUser(), s=subjectSel.value, t=topicSel.value;
   const correct = index===current.answerIndex;
-  // marcar
   [...$("#options").children].forEach((el,i)=>{
     el.disabled=true;
     if(i===current.answerIndex) el.classList.add('correct');
     if(i===index && !correct) el.classList.add('incorrect');
     if(i===index && correct) el.classList.add('correct');
   });
-  // stats + ability + puntos
   const st=statsGet(u,s,t); st.seen += 1; correct ? st.right++ : st.wrong++; statsSet(u,s,t,st);
   let ab=abilityGet(u,s,t); ab += correct ? 0.05 : -0.07; abilitySet(u,s,t,ab);
   const delta = correct ? 10 : 0; addPoints(u, delta);
   trackHistory(u, s, t, correct);
   checkStreak(u, correct);
   renderStats(u,s,t);
-  // feedback
   $("#result").textContent = correct ? "✅ ¡Correcto!" : "❌ Incorrecto";
   $("#result").className = "result " + (correct ? "good" : "bad");
   $("#explanation").innerHTML = `<div>${current.explain??''}</div>`;
   $("#explanation").classList.remove("hidden");
-  // medallas
+  $("#similar").classList.remove("hidden");
+  $("#next").classList.remove("hidden");
+  if(!correct){ $("#similar").classList.add("accent"); $("#next").classList.remove("accent"); }
+  else { $("#similar").classList.remove("accent"); $("#next").classList.add("accent"); }
   evaluateBadges(u);
 }
 
@@ -661,8 +712,8 @@ function startExam(){
     const sub = sample(poolSubjects);
     const tops = topics(sub);
     const top = sample(tops);
-    if(Math.random()<0.7){ const g=buildFromTemplate(sub, top); if(g) qs.push(g); else { const bank=bankBy(sub,top); if(bank.length) qs.push(sample(bank)); } }
-    else { const bank=bankBy(sub,top); if(bank.length) qs.push(sample(bank)); else { const g=buildFromTemplate(sub, top); if(g) qs.push(g); } }
+    const g=buildFromTemplate(sub, top);
+    qs.push(g);
   }
   exam = { items: qs, answers: Array(qs.length).fill(null), idx: 0, seconds: minutes*60 };
   $("#examTotal").textContent = String(qs.length);
@@ -680,7 +731,7 @@ function renderExamQuestion(){
     const b=document.createElement('button');
     b.type="button"; b.className='option'; b.textContent=ch;
     const chosen = exam.answers[i]===ci;
-    if(chosen) b.classList.add('correct'); // usar verde como "seleccionado"
+    if(chosen) b.classList.add('correct');
     b.onclick = ()=>{ exam.answers[i]=ci; renderExamQuestion(); };
     box.appendChild(b);
   });
@@ -725,8 +776,8 @@ function startDaily(){
   const qs=[]; const poolSubjects=subjects();
   for(let i=0;i<10;i++){
     const sub=sample(poolSubjects); const top=sample(topics(sub));
-    const g=buildFromTemplate(sub, top) || sample(bankBy(sub,top));
-    if(g) qs.push(g);
+    const g=buildFromTemplate(sub, top);
+    qs.push(g);
   }
   daily = { items:qs, idx:0, wrong:false };
   $("#dailyStart").classList.add("hidden");
@@ -764,7 +815,7 @@ function renderDaily(){
     else {
       const u=getActiveUser();
       localStorage.setItem(dailyKey(u),"done");
-      const gained = daily.wrong? (10*daily.items.length) : (20*daily.items.length); // doble si perfecto
+      const gained = daily.wrong? (10*daily.items.length) : (20*daily.items.length);
       addPoints(u, gained);
       trackHistory(u, "Reto diario", "Mixto", null, daily.items.length - (daily.wrong?1:0), daily.items.length);
       evaluateBadges(u, false, !daily.wrong);
@@ -783,7 +834,7 @@ function showDaily(){
 /* ================== HISTORIAL ================== */
 function histKey(u){ return `history:${u}`; }
 function getHistory(u){ return JSON.parse(localStorage.getItem(histKey(u))||"[]"); }
-function pushHistory(u, rec){ const h=getHistory(u); h.push(rec); localStorage.setItem(histKey(u), JSON.stringify(h.slice(-200))); } // máximo 200
+function pushHistory(u, rec){ const h=getHistory(u); h.push(rec); localStorage.setItem(histKey(u), JSON.stringify(h.slice(-200))); }
 function trackHistory(u, subject, topic, correct=null, correctCount=0, total=1){
   const rec = { date: new Date().toISOString(), subject, topic, correct, correctCount, total };
   pushHistory(u, rec);
@@ -795,7 +846,6 @@ function showHistory(){
     const label = (r.correct===null) ? `Examen/Reto: ${r.correctCount}/${r.total}` : (r.correct ? "✔️" : "✖️");
     return `<li>${dd} — <b>${r.subject}</b> / ${r.topic} — ${label}</li>`;
   }).join('');
-  // chart últimos 7 días
   const daily = {};
   for(const r of h){
     const day = r.date.slice(0,10);
@@ -813,9 +863,7 @@ function drawChart(canvas, data){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   const pad=30, w=canvas.width, h=canvas.height, cw=w-pad*2, ch=h-pad*2;
   ctx.strokeStyle="#ccc"; ctx.fillStyle="#000"; ctx.font="12px system-ui";
-  // axes
   ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
-  // bars
   const bw = cw / Math.max(1,data.length);
   data.forEach((d,i)=>{
     const x=pad + i*bw + bw*0.15;
@@ -837,17 +885,13 @@ const BADGE_LIST = [
 ];
 function badgesKey(u){ return `badges:${u}`; }
 function getAllBadges(u){ return JSON.parse(localStorage.getItem(badgesKey(u))||"[]"); }
-function awardBadge(u,id){
-  const b=getAllBadges(u); if(!b.includes(id)){ b.push(id); localStorage.setItem(badgesKey(u), JSON.stringify(b)); }
-}
+function awardBadge(u,id){ const b=getAllBadges(u); if(!b.includes(id)){ b.push(id); localStorage.setItem(badgesKey(u), JSON.stringify(b)); } }
 let streak=0;
 function checkStreak(u, correct){
   streak = correct ? streak+1 : 0;
   if(streak>=10) awardBadge(u,"streak10");
-  // 100 preguntas (práctica)
   const total = Object.keys(localStorage).filter(k=>k.startsWith(`stats:${u}:`)).map(k=>JSON.parse(localStorage.getItem(k)).seen||0).reduce((a,b)=>a+b,0);
   if(total>=100) awardBadge(u,"hundredQs");
-  // nivel mate
   const level = abilityGet(u,"Matemáticas","Álgebra");
   if(level>=0.80) awardBadge(u,"mathMax");
 }
@@ -866,7 +910,6 @@ function renderBadges(){
 
 /* ================== INICIO ================== */
 (function start(){
-  // mostrar login o app
   const u=getActiveUser();
   setTheme(u||"Alba");
   renderHomeScores();
@@ -885,9 +928,7 @@ function renderBadges(){
 </script>
 
 <div class="small muted" style="margin-top:16px">
-  Hecho para práctica personal de Saber 11 — Contenido de estudio y preguntas generadas/parametrizadas (no copiado de bancos con copyright).<br>
-  Sugerencia: guarda esta página en la pantalla de inicio del iPad para que Alba y Lara la usen como una app.
+  Hecho para práctica personal de Saber 11 — Explicaciones ampliadas (mín. 1 párrafo). Preguntas generadas/parametrizadas, sin copiar bancos con copyright.
 </div>
-
 </body>
 </html>
