@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Saber 11 — Práctica Adaptativa (2 usuarias)</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:24px;max-width:880px}
+  header{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+  label{font-size:12px;color:#555}
+  select,button,input{font-size:16px;padding:8px 10px}
+  .card{border:1px solid #ddd;border-radius:10px;padding:16px;margin:12px 0;background:#fff}
+  .muted{color:#666}
+  .small{font-size:12px}
+  .option{display:block;width:100%;text-align:left;margin:8px 0;padding:10px;border:1px solid #ccc;border-radius:8px;cursor:pointer;background:#fafafa}
+  .option.correct{border-color:#2e7d32;background:#eef7ee}
+  .option.incorrect{border-color:#c62828;background:#fbeaea}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .pill{display:inline-block;border:1px solid #ddd;border-radius:999px;padding:4px 10px;margin-right:8px;font-size:12px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header class="row">
+  <div>
+    <label>Usuario</label><br>
+    <select id="user">
+      <option>Hija 1</option>
+      <option>Hija 2</option>
+    </select>
+  </div>
+  <div>
+    <label>Asignatura</label><br>
+    <select id="subject"></select>
+  </div>
+  <div>
+    <label>Tema</label><br>
+    <select id="topic"></select>
+  </div>
+  <div style="margin-left:auto">
+    <button id="reset">Reiniciar progreso</button>
+  </div>
+</header>
+
+<section id="stats" class="muted small"></section>
+
+<section id="qcard" class="card hidden">
+  <div id="meta" class="muted small" style="margin-bottom:8px"></div>
+  <div id="question" style="font-size:18px;font-weight:600"></div>
+  <div id="options"></div>
+
+  <div id="feedback" class="hidden">
+    <div id="explanation" class="card" style="background:#f9fafc"></div>
+    <div class="row">
+      <button id="similar">Probar una similar</button>
+      <button id="next">Siguiente</button>
+    </div>
+  </div>
+</section>
+
+<section class="muted small">
+  Consejo: intenta responder en <span class="pill">≤ 90 s</span>. Si fallas, lee la explicación y prueba la similar.
+</section>
+
+<script>
+/* ================== CONTENIDO INICIAL (puedes ampliar) ================== */
+/* Añade más preguntas copiando los objetos de QUESTIONS. 
+   Añade más plantillas “similares” en TEMPLATES. */
+
+const QUESTIONS = [
+  // MATEMÁTICAS → Álgebra
+  {id:"m-alg-1", subject:"Matemáticas", topic:"Álgebra",
+   stem:"Si 3x + 2 = 20, ¿cuánto vale x?",
+   choices:["4","5","6","7"], answerIndex:2, difficulty:0.30,
+   explain:"Aísla x: 3x = 18 → x = 6."
+  },
+  {id:"m-alg-2", subject:"Matemáticas", topic:"Álgebra",
+   stem:"Resuelve: 2(x − 5) = 4x − 10",
+   choices:["x = 0","x = 5","x = 10","x = −5"], answerIndex:0, difficulty:0.35,
+   explain:"2x−10 = 4x−10 → 2x = 0 → x = 0."
+  },
+
+  // MATEMÁTICAS → Geometría
+  {id:"m-geo-1", subject:"Matemáticas", topic:"Geometría",
+   stem:"Un triángulo rectángulo tiene catetos 3 y 4. ¿Hipotenusa?",
+   choices:["4","5","6","7"], answerIndex:1, difficulty:0.30,
+   explain:"Pitágoras: √(3²+4²)=√25=5."
+  },
+
+  // CIENCIAS → Química
+  {id:"c-q-1", subject:"Ciencias Naturales", topic:"Química",
+   stem:"¿Cuál es la masa molar aproximada del H₂O?",
+   choices:["18 g/mol","16 g/mol","20 g/mol","14 g/mol"], answerIndex:0, difficulty:0.25,
+   explain:"2×H (~1) + O (~16) ≈ 18 g/mol."
+  },
+
+  // CIENCIAS → Biología
+  {id:"c-bio-1", subject:"Ciencias Naturales", topic:"Biología",
+   stem:"¿Dónde ocurre principalmente la fotosíntesis en las plantas?",
+   choices:["Raíz","Estoma","Cloroplasto","Xilema"], answerIndex:2, difficulty:0.25,
+   explain:"La fase luminosa y el ciclo de Calvin ocurren en el cloroplasto."
+  },
+
+  // LECTURA CRÍTICA → Inferencias
+  {id:"lc-inf-1", subject:"Lectura Crítica", topic:"Inferencias",
+   stem:"El autor 'lamenta el deterioro ambiental'. Inferir que apoya políticas de protección se basa en…",
+   choices:["Una afirmación explícita","Un dato","Una implicatura razonable","Una falacia"], answerIndex:2, difficulty:0.40,
+   explain:"No lo dice; se deduce del tono (implicatura)."
+  },
+
+  // INGLÉS → Vocabulario
+  {id:"en-v-1", subject:"Inglés", topic:"Vocabulary",
+   stem:"Choose the best synonym for 'reliable':",
+   choices:["trustworthy","fragile","temporary","careless"], answerIndex:0, difficulty:0.30,
+   explain:"'Reliable' ≈ 'trustworthy'."
+  }
+];
+
+// Plantillas para “pregunta muy parecida” (misma idea, números distintos)
+const TEMPLATES = [
+  {
+    id:"tpl-linear-1",
+    subject:"Matemáticas",
+    topic:"Álgebra",
+    difficulty:0.30,
+    build: () => {
+      // Genera a x + b = c → x = (c-b)/a (entero)
+      let a,b,c,x;
+      for(let tries=0; tries<80; tries++){
+        a = randInt(2,9);
+        b = randInt(1,15);
+        x = randInt(1,12);
+        c = a*x + b;
+        if ((c-b)%a===0) break;
+      }
+      const answer = (c-b)/a;
+      const options = shuffle([answer, answer+1, answer-1, answer+2]).map(v=>String(v));
+      return {
+        stem:`Si ${a}x + ${b} = ${c}, ¿cuánto vale x?`,
+        choices: options,
+        answerIndex: options.indexOf(String(answer)),
+        explain:`${a}x = ${c} − ${b} = ${c-b} → x = ${c-b}/${a} = ${answer}.`
+      };
+    }
+  },
+  {
+    id:"tpl-hip-1",
+    subject:"Matemáticas",
+    topic:"Geometría",
+    difficulty:0.30,
+    build: () => {
+      const a = randChoice([[5,12,13],[6,8,10],[9,12,15]])[0]; // elegiremos tripletas de Pitágoras
+      const sets = [[3,4,5],[5,12,13],[6,8,10],[8,15,17],[9,12,15]];
+      const t = sets[randInt(0,sets.length-1)];
+      const c1=t[0], c2=t[1], h=t[2];
+      const choices = shuffle([h, h+1, h-1, h+2]).map(String);
+      return {
+        stem:`Triángulo rectángulo con catetos ${c1} y ${c2}. ¿Hipotenusa?`,
+        choices,
+        answerIndex: choices.indexOf(String(h)),
+        explain:`Pitágoras: √(${c1}²+${c2}²)=${h}.`
+      };
+    }
+  },
+  {
+    id:"tpl-stoich-1",
+    subject:"Ciencias Naturales",
+    topic:"Química",
+    difficulty:0.35,
+    build: () => {
+      const x = randInt(1,4);
+      const y = 2*randInt(1,4); // par para que sea simple
+      const o2 = x + y/4;
+      const choices = shuffle([o2, o2+0.5, o2-0.5, o2+1]).map(v=>String(v));
+      return {
+        stem:`En la combustión de C${x}H${y}, ¿coeficiente de O₂ al balancear?`,
+        choices,
+        answerIndex: choices.indexOf(String(o2)),
+        explain:`Balance: C${x}H${y} + ( ${x} + ${y}/4 ) O₂ → ${x} CO₂ + ${y/2} H₂O.`
+      };
+    }
+  }
+];
+
+/* ================== LÓGICA (no necesitas tocar) ================== */
+
+const subjectSel = document.getElementById('subject');
+const topicSel   = document.getElementById('topic');
+const userSel    = document.getElementById('user');
+const qcard = document.getElementById('qcard');
+const qmeta = document.getElementById('meta');
+const qstem = document.getElementById('question');
+const qopts = document.getElementById('options');
+const feedback = document.getElementById('feedback');
+const expDiv = document.getElementById('explanation');
+const btnSimilar = document.getElementById('similar');
+const btnNext = document.getElementById('next');
+const btnReset = document.getElementById('reset');
+
+const currentUser = ()=> userSel.value;
+const abilityKey = (s,t)=>`ability:${currentUser()}:${s}:${t}`;
+const statsKey   = (s,t)=>`stats:${currentUser()}:${s}:${t}`;
+
+function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(arr){ return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]); }
+function randChoice(arr){ return arr[randInt(0,arr.length-1)]; }
+
+function loadAbility(subject,topic){
+  const v = localStorage.getItem(abilityKey(subject,topic));
+  return v ? parseFloat(v) : 0.30; // nivel inicial
+}
+function saveAbility(subject,topic,val){
+  localStorage.setItem(abilityKey(subject,topic), String(clamp(val,0.05,0.95)));
+}
+function loadStats(subject,topic){
+  const v = localStorage.getItem(statsKey(subject,topic));
+  return v ? JSON.parse(v) : {seen:0, right:0, wrong:0};
+}
+function saveStats(subject,topic,st){
+  localStorage.setItem(statsKey(subject,topic), JSON.stringify(st));
+}
+
+function subjects(){
+  const s1 = new Set(QUESTIONS.map(q=>q.subject));
+  const s2 = new Set(TEMPLATES.map(t=>t.subject));
+  return [...new Set([...s1,...s2])];
+}
+function topics(subject){
+  const t1 = QUESTIONS.filter(q=>q.subject===subject).map(q=>q.topic);
+  const t2 = TEMPLATES.filter(t=>t.subject===subject).map(t=>t.topic);
+  return [...new Set([...t1,...t2])];
+}
+function bankBy(subject,topic){
+  return QUESTIONS.filter(q=>q.subject===subject && q.topic===topic);
+}
+function templateFor(subject,topic){
+  const cands = TEMPLATES.filter(t=>t.subject===subject && t.topic===topic);
+  return cands.length ? cands[randInt(0,cands.length-1)] : null;
+}
+
+function pickNext(subject,topic){
+  const ability = loadAbility(subject,topic);
+  const bank = bankBy(subject,topic);
+  if (bank.length===0) return null;
+
+  // 70% banco fijo, 30% plantilla generada
+  if (Math.random()<0.30){
+    const tpl = templateFor(subject,topic);
+    if (tpl){
+      const built = tpl.build();
+      return {
+        id:`gen-${tpl.id}-${Date.now()}`,
+        subject, topic, difficulty: tpl.difficulty,
+        stem: built.stem, choices: built.choices,
+        answerIndex: built.answerIndex, explain: built.explain, generated:true
+      };
+    }
+  }
+  // escoger la dificultad más cercana a la habilidad
+  let best=null, gap=1e9;
+  for(const q of bank){
+    const g = Math.abs((q.difficulty??0.3)-ability);
+    if(g<gap){ best=q; gap=g; }
+  }
+  return {...best};
+}
+
+function updateAbility(subject,topic,correct){
+  let ability = loadAbility(subject,topic);
+  ability += correct ? 0.05 : -0.07;  // sencillo y efectivo
+  saveAbility(subject,topic,ability);
+}
+
+function renderStats(subject,topic){
+  const st = loadStats(subject,topic);
+  const ability = loadAbility(subject,topic);
+  document.getElementById('stats').innerHTML = `
+    <span class="pill">Usuario: <b>${currentUser()}</b></span>
+    <span class="pill">Aciertos: <b>${st.right}</b></span>
+    <span class="pill">Errores: <b>${st.wrong}</b></span>
+    <span class="pill">Vistas: <b>${st.seen}</b></span>
+    <span class="pill">Nivel: <b>${ability.toFixed(2)}</b></span>
+  `;
+}
+
+function initSelectors(){
+  subjectSel.innerHTML = subjects().map(s=>`<option>${s}</option>`).join('');
+  onSubjectChange();
+}
+function onSubjectChange(){
+  const s = subjectSel.value;
+  const ts = topics(s);
+  topicSel.innerHTML = ts.map(t=>`<option>${t}</option>`).join('');
+  onTopicChange();
+}
+function onTopicChange(){
+  renderStats(subjectSel.value, topicSel.value);
+  nextQuestion();
+}
+
+function nextQuestion(){
+  const s = subjectSel.value, t = topicSel.value;
+  const q = pickNext(s,t);
+  if(!q){
+    qcard.classList.add('hidden');
+    alert("No hay preguntas en este tema. Agrega más en QUESTIONS o TEMPLATES.");
+    return;
+  }
+  qcard.classList.remove('hidden');
+  feedback.classList.add('hidden');
+  current = q;
+  qmeta.textContent = `${q.subject} • ${q.topic} • dif ${(q.difficulty??0.3).toFixed(2)}${q.generated?' • generada':''}`;
+  qstem.textContent = q.stem;
+  qopts.innerHTML = '';
+  q.choices.forEach((ch,i)=>{
+    const b=document.createElement('button');
+    b.className='option';
+    b.textContent=ch;
+    b.onclick=()=>selectOption(i);
+    qopts.appendChild(b);
+  });
+}
+
+let current=null;
+
+function selectOption(index){
+  const correct = index===current.answerIndex;
+  [...qopts.children].forEach((el,i)=>{
+    el.disabled = true;
+    el.classList.add(i===current.answerIndex?'correct':'');
+    if(i===index && !correct) el.classList.add('incorrect');
+  });
+  const s=subjectSel.value, t=topicSel.value;
+  const st = loadStats(s,t);
+  st.seen += 1;
+  correct ? st.right++ : st.wrong++;
+  saveStats(s,t,st);
+  updateAbility(s,t,correct);
+  renderStats(s,t);
+  expDiv.innerHTML = `<div><b>${correct?'¡Correcto!':'Incorrecto.'}</b> ${current.explain??''}</div>`;
+  feedback.classList.remove('hidden');
+}
+
+btnSimilar.onclick = ()=>{
+  const s = subjectSel.value, t = topicSel.value;
+  const tpl = templateFor(s,t);
+  if(!tpl){ alert("No hay plantilla para este tema aún."); return; }
+  const v = tpl.build();
+  current = {
+    id:`gen-${tpl.id}-${Date.now()}`,
+    subject:s, topic:t, difficulty: tpl.difficulty,
+    stem:v.stem, choices:v.choices, answerIndex:v.answerIndex, explain:v.explain, generated:true
+  };
+  qstem.textContent = current.stem;
+  qopts.innerHTML = '';
+  current.choices.forEach((ch,i)=>{
+    const b=document.createElement('button');
+    b.className='option';
+    b.textContent=ch;
+    b.onclick=()=>selectOption(i);
+    qopts.appendChild(b);
+  });
+  feedback.classList.add('hidden');
+};
+
+btnNext.onclick = ()=> nextQuestion();
+
+btnReset.onclick = ()=>{
+  if(confirm("¿Borrar el progreso del usuario/tema actuales?")){
+    const s=subjectSel.value, t=topicSel.value;
+    localStorage.removeItem(abilityKey(s,t));
+    localStorage.removeItem(statsKey(s,t));
+    renderStats(s,t);
+    nextQuestion();
+  }
+};
+
+userSel.onchange = ()=> onTopicChange();
+subjectSel.onchange = onSubjectChange;
+topicSel.onchange = onTopicChange;
+
+initSelectors();
+
+/* ================== Cómo ampliar (muy fácil) ==================
+  1) Añade preguntas en QUESTIONS (copia un objeto y cambia el contenido).
+  2) Añade plantillas “similares” en TEMPLATES (para variar números).
+  3) Para nuevas asignaturas/temas, basta con poner nuevos nombres en subject/topic.
+=============================================================== */
+</script>
+</body>
+</html>
