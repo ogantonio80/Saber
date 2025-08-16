@@ -2,468 +2,892 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Saber 11 — Práctica Adaptativa (2 usuarias)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saber 11 — Alba & Lara (Estudio • Práctica • Simulador)</title>
 <style>
-  :root{--bg:#ffffff;--card:#ffffff;--muted:#666;--border:#ddd;--ok:#2e7d32;--bad:#c62828}
+  :root{
+    --bg:#ffffff;--card:#ffffff;--muted:#666;--border:#ddd;
+    --ok:#1e7d32;--okbg:#d9fdd3;--bad:#c62828;--badbg:#fde8e8;
+    --accent:#1a73e8;--accentText:#fff;
+  }
+  [data-theme="Alba"]{
+    --accent:#e91e63; /* rosa */
+    --accentText:#fff;
+  }
+  [data-theme="Lara"]{
+    --accent:#7e57c2; /* morado */
+    --accentText:#fff;
+  }
   *{box-sizing:border-box}
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:20px;max-width:980px;background:var(--bg)}
-  header{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
-  label{font-size:12px;color:#555}
-  select,button,input{font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:#fff}
-  button{cursor:pointer}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:16px;max-width:980px;background:var(--bg)}
+  h1,h2{margin:.2em 0}
   .card{border:1px solid var(--border);border-radius:12px;padding:16px;margin:12px 0;background:var(--card);box-shadow:0 1px 0 rgba(0,0,0,.02)}
   .muted{color:var(--muted)}
   .small{font-size:12px}
-  .option{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;border:1px solid #ccc;border-radius:10px;cursor:pointer;background:#fafafa}
-  .option.correct{border-color:var(--ok);background:#eef7ee}
-  .option.incorrect{border-color:var(--bad);background:#fbeaea}
-  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .col{display:flex;flex-direction:column;gap:6px}
+  button,select,input{font-size:16px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:pointer}
+  button.accent{background:var(--accent);color:var(--accentText);border-color:var(--accent)}
+  .option{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;border:1px solid #ccc;border-radius:10px;cursor:pointer;background:#fafafa;transition:background .2s,border-color .2s,transform .05s}
+  .option:active{transform:scale(0.99)}
+  .option.correct{border-color:var(--ok);background:var(--okbg)}
+  .option.incorrect{border-color:var(--bad);background:var(--badbg)}
   .pill{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:4px 10px;margin-right:8px;font-size:12px}
   .hidden{display:none}
-  .footer{margin-top:24px}
+  header.appbar{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:8px 0 16px}
+  header.appbar .spacer{flex:1}
+  .result{margin-top:8px;font-weight:700}
+  .result.good{color:var(--ok)}
+  .result.bad{color:var(--bad)}
+  .score{font-weight:700;color:#111}
+  .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .timer{font-weight:700}
+  .list{list-style:none;padding-left:0;margin:0}
+  .badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:6px 10px;margin:4px 6px 0 0}
+  .nav{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .nav button{border-color:var(--accent);color:var(--accent);background:#fff}
+  .nav button.active{background:var(--accent);color:var(--accentText)}
+  .title{display:flex;align-items:center;gap:8px}
+  .title .chip{background:var(--accent);color:var(--accentText);border-radius:999px;padding:4px 10px;font-size:12px}
+  canvas{max-width:100%}
 </style>
 </head>
 <body>
-<header class="row">
-  <div>
-    <label>Usuario</label><br>
-    <select id="user">
-      <option>Hija 1</option>
-      <option>Hija 2</option>
-    </select>
-  </div>
-  <div>
-    <label>Asignatura</label><br>
-    <select id="subject"></select>
-  </div>
-  <div>
-    <label>Tema</label><br>
-    <select id="topic"></select>
-  </div>
-  <div style="margin-left:auto">
-    <button id="reset">Reiniciar progreso</button>
-  </div>
-</header>
 
-<section id="stats" class="muted small"></section>
-
-<section id="qcard" class="card hidden">
-  <div id="meta" class="muted small" style="margin-bottom:8px"></div>
-  <div id="question" style="font-size:18px;font-weight:600"></div>
-  <div id="options"></div>
-
-  <div id="feedback" class="hidden">
-    <div id="explanation" class="card" style="background:#f9fafc"></div>
-    <div class="row">
-      <button id="similar">Probar una similar</button>
-      <button id="next">Siguiente</button>
+<!-- ============ LOGIN ============ -->
+<section id="loginView" class="card">
+  <h1>👋 Hola</h1>
+  <p>Elige quién va a practicar hoy y escribe su clave (PIN de 4 dígitos).</p>
+  <div class="grid">
+    <div class="card">
+      <div class="title"><h2>Alba</h2><span class="chip">Rosa</span></div>
+      <div class="muted small">Puntos: <span id="albaPoints" class="score">0</span> · Medallas: <span id="albaBadgesCount">0</span></div>
+      <div class="row">
+        <input id="pinAlba" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN (4 dígitos)">
+        <button class="accent" onclick="enterWithPIN('Alba', 'pinAlba')">Entrar</button>
+      </div>
+      <div class="small muted">Primer uso: el PIN que escribas quedará guardado.</div>
+    </div>
+    <div class="card">
+      <div class="title"><h2>Lara</h2><span class="chip">Morado</span></div>
+      <div class="muted small">Puntos: <span id="laraPoints" class="score">0</span> · Medallas: <span id="laraBadgesCount">0</span></div>
+      <div class="row">
+        <input id="pinLara" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN (4 dígitos)">
+        <button class="accent" onclick="enterWithPIN('Lara', 'pinLara')">Entrar</button>
+      </div>
+      <div class="small muted">Primer uso: el PIN que escribas quedará guardado.</div>
     </div>
   </div>
 </section>
 
-<section class="muted small">
-  Consejo: intenta responder en <span class="pill">≤ 90 s</span>. Si fallas, lee la explicación y prueba la similar. El sistema ajusta la dificultad automáticamente.
+<!-- ============ APP ============ -->
+<section id="appView" class="hidden">
+  <header class="appbar">
+    <div><b>Usuario:</b> <span id="who"></span></div>
+    <div class="spacer"></div>
+    <div class="nav">
+      <button id="navStudy" class="active">Estudio</button>
+      <button id="navPractice">Práctica</button>
+      <button id="navExam">Simulador</button>
+      <button id="navDaily">Reto diario</button>
+      <button id="navHistory">Historial</button>
+      <button id="navBadges">Medallas</button>
+    </div>
+    <div class="spacer"></div>
+    <button onclick="logout()">Cerrar sesión</button>
+  </header>
+
+  <!-- ===== STUDY ===== -->
+  <section id="studyView" class="card">
+    <h2>📚 Estudio</h2>
+    <div class="row">
+      <div class="col">
+        <label class="small">Asignatura</label>
+        <select id="studySubject"></select>
+      </div>
+      <div class="col">
+        <label class="small">Tema</label>
+        <select id="studyTopic"></select>
+      </div>
+      <div class="spacer"></div>
+      <div class="col">
+        <label class="small">Acciones</label>
+        <button id="studyPractice" class="accent">Practicar este tema</button>
+      </div>
+    </div>
+    <div id="studyContent" class="card" style="background:#f9fafc"></div>
+    <div id="studyExamples" class="card hidden"></div>
+    <div id="studyQ" class="card hidden">
+      <div id="studyStem" style="font-weight:600"></div>
+      <div id="studyOpts"></div>
+      <div id="studyResult" class="result hidden"></div>
+      <div id="studyExplain" class="small muted hidden"></div>
+    </div>
+  </section>
+
+  <!-- ===== PRACTICE ===== -->
+  <section id="practiceView" class="card hidden">
+    <div class="row">
+      <div class="col">
+        <label class="small">Asignatura</label>
+        <select id="subject"></select>
+      </div>
+      <div class="col">
+        <label class="small">Tema</label>
+        <select id="topic"></select>
+      </div>
+      <div class="spacer"></div>
+      <div class="col">
+        <label class="small">Acciones</label>
+        <div class="row">
+          <button id="reset">Reiniciar progreso (tema)</button>
+        </div>
+      </div>
+    </div>
+    <div id="stats" class="muted small" style="margin-top:8px"></div>
+    <hr>
+    <div id="meta" class="muted small" style="margin-bottom:8px"></div>
+    <div id="question" style="font-size:18px;font-weight:600"></div>
+    <div id="result" class="result hidden"></div>
+    <div id="options"></div>
+    <div id="explanation" class="card hidden" style="background:#f9fafc"></div>
+    <div class="row">
+      <button id="similar">Probar una similar</button>
+      <button id="next">Siguiente</button>
+    </div>
+  </section>
+
+  <!-- ===== EXAM ===== -->
+  <section id="examView" class="card hidden">
+    <h2>Simulador Saber 11</h2>
+    <div class="row">
+      <div class="col">
+        <label class="small">Cantidad</label>
+        <select id="examCount">
+          <option value="45" selected>45</option>
+          <option value="30">30</option>
+          <option value="60">60</option>
+        </select>
+      </div>
+      <div class="col">
+        <label class="small">Tiempo</label>
+        <select id="examMinutes">
+          <option value="90" selected>90 min</option>
+          <option value="60">60 min</option>
+          <option value="45">45 min</option>
+        </select>
+      </div>
+      <div class="col" style="align-self:flex-end">
+        <button class="accent" onclick="startExam()">Comenzar</button>
+      </div>
+    </div>
+    <p class="small muted">Durante el examen no sabrás si aciertas; al final verás el resumen con explicaciones.</p>
+    <section id="examCard" class="card hidden">
+      <div class="row">
+        <div><b>Pregunta</b> <span id="examIndex">1</span>/<span id="examTotal">45</span></div>
+        <div class="spacer"></div>
+        <div class="timer">⏱ <span id="examTimer">90:00</span></div>
+      </div>
+      <div id="examQ" style="font-size:18px;font-weight:600;margin-top:6px"></div>
+      <div id="examOptions"></div>
+      <div class="row">
+        <button id="examPrev">Anterior</button>
+        <button id="examNext">Siguiente</button>
+        <div class="spacer"></div>
+        <button onclick="finishExam()" class="accent">Finalizar</button>
+      </div>
+    </section>
+    <section id="examSummary" class="card hidden">
+      <h3>Resultados</h3>
+      <p><b>Correctas:</b> <span id="sumCorrect">0</span> / <span id="sumTotal">0</span> — <b>Puntos:</b> <span id="sumScore">0</span></p>
+      <ol id="sumList" class="list"></ol>
+    </section>
+  </section>
+
+  <!-- ===== DAILY CHALLENGE ===== -->
+  <section id="dailyView" class="card hidden">
+    <h2>🔥 Reto diario</h2>
+    <p class="small muted">10 preguntas mixtas. Completar sin fallos da <b>puntuación doble</b>.</p>
+    <div id="dailyCard" class="card hidden">
+      <div><b>Pregunta</b> <span id="dailyIndex">1</span>/10</div>
+      <div id="dailyQ" style="font-size:18px;font-weight:600;margin-top:6px"></div>
+      <div id="dailyOptions"></div>
+      <div id="dailyResult" class="result hidden"></div>
+      <div id="dailyExplain" class="small muted hidden"></div>
+      <div class="row" style="margin-top:8px">
+        <button id="dailyNext">Siguiente</button>
+      </div>
+    </div>
+    <div id="dailyStart" class="row">
+      <button class="accent" onclick="startDaily()">Comenzar reto de hoy</button>
+    </div>
+    <div id="dailyDone" class="hidden"><b>✅ Reto del día completado.</b></div>
+  </section>
+
+  <!-- ===== HISTORY ===== -->
+  <section id="historyView" class="card hidden">
+    <h2>📈 Historial</h2>
+    <canvas id="histChart" width="900" height="220"></canvas>
+    <ul id="histList" class="list"></ul>
+  </section>
+
+  <!-- ===== BADGES ===== -->
+  <section id="badgesView" class="card hidden">
+    <h2>🏅 Medallas</h2>
+    <div id="badgesBox"></div>
+  </section>
 </section>
 
 <script>
-/* ================== CONTENIDO INICIAL ================== */
-/* Puedes ampliar QUESTIONS y TEMPLATES copiando y pegando más objetos. */
-
-const QUESTIONS = [
-  // MATEMÁTICAS → Álgebra
-  {id:"m-alg-1", subject:"Matemáticas", topic:"Álgebra",
-   stem:"Si 3x + 2 = 20, ¿cuánto vale x?",
-   choices:["4","5","6","7"], answerIndex:2, difficulty:0.30,
-   explain:"Aísla x: 3x = 18 → x = 6."
-  },
-  {id:"m-alg-2", subject:"Matemáticas", topic:"Álgebra",
-   stem:"Resuelve: 2(x − 5) = 4x − 10",
-   choices:["x = 0","x = 5","x = 10","x = −5"], answerIndex:0, difficulty:0.35,
-   explain:"2x−10 = 4x−10 → 2x = 0 → x = 0."
-  },
-  {id:"m-alg-3", subject:"Matemáticas", topic:"Álgebra",
-   stem:"Si 4x − 3 = 9, ¿cuánto vale x?",
-   choices:["2","3","4","5"], answerIndex:1, difficulty:0.33,
-   explain:"4x = 12 → x = 3."
-  },
-
-  // MATEMÁTICAS → Geometría
-  {id:"m-geo-1", subject:"Matemáticas", topic:"Geometría",
-   stem:"Un triángulo rectángulo tiene catetos 3 y 4. ¿Hipotenusa?",
-   choices:["4","5","6","7"], answerIndex:1, difficulty:0.30,
-   explain:"Pitágoras: √(3²+4²)=√25=5."
-  },
-  {id:"m-geo-2", subject:"Matemáticas", topic:"Geometría",
-   stem:"Un rectángulo mide 7 de largo y 5 de ancho. ¿Perímetro?",
-   choices:["12","35","24","20"], answerIndex:3, difficulty:0.25,
-   explain:"Perímetro = 2(l+a) = 2(7+5)=24? OJO: 2×12=24, respuesta 24."
-  },
-
-  // MATEMÁTICAS → Probabilidad
-  {id:"m-prob-1", subject:"Matemáticas", topic:"Probabilidad",
-   stem:"Se lanza un dado perfecto. Probabilidad de obtener un número par.",
-   choices:["1/6","1/2","2/3","5/6"], answerIndex:1, difficulty:0.30,
-   explain:"Resultados pares: 2,4,6 (3 de 6) → 3/6 = 1/2."
-  },
-  {id:"m-prob-2", subject:"Matemáticas", topic:"Probabilidad",
-   stem:"En una bolsa hay 3 rojas y 2 azules. Se saca una al azar. Probabilidad de roja.",
-   choices:["2/5","3/5","1/2","4/5"], answerIndex:1, difficulty:0.28,
-   explain:"Total 5, rojas 3 → 3/5."
-  },
-
-  // CIENCIAS → Química
-  {id:"c-q-1", subject:"Ciencias Naturales", topic:"Química",
-   stem:"¿Cuál es la masa molar aproximada del H₂O?",
-   choices:["18 g/mol","16 g/mol","20 g/mol","14 g/mol"], answerIndex:0, difficulty:0.25,
-   explain:"2×H (~1) + O (~16) ≈ 18 g/mol."
-  },
-  {id:"c-q-2", subject:"Ciencias Naturales", topic:"Química",
-   stem:"Una solución 1 M de NaCl contiene…",
-   choices:["1 mol de NaCl por litro","1 g de NaCl por litro","0.5 mol por litro","Depende del pH"], answerIndex:0, difficulty:0.40,
-   explain:"Molaridad 1 M = 1 mol de soluto en 1 L de solución."
-  },
-
-  // CIENCIAS → Biología
-  {id:"c-bio-1", subject:"Ciencias Naturales", topic:"Biología",
-   stem:"¿Dónde ocurre principalmente la fotosíntesis en las plantas?",
-   choices:["Raíz","Estoma","Cloroplasto","Xilema"], answerIndex:2, difficulty:0.25,
-   explain:"La fase luminosa y el ciclo de Calvin ocurren en el cloroplasto."
-  },
-  {id:"c-bio-2", subject:"Ciencias Naturales", topic:"Biología",
-   stem:"¿Qué molécula almacena la información genética?",
-   choices:["ARN","ADN","ATP","Glucógeno"], answerIndex:1, difficulty:0.22,
-   explain:"El ADN contiene la información hereditaria de la célula."
-  },
-
-  // CIENCIAS → Física
-  {id:"c-fis-1", subject:"Ciencias Naturales", topic:"Física",
-   stem:"Un móvil recorre 100 m en 10 s a velocidad constante. ¿Velocidad?",
-   choices:["5 m/s","10 m/s","20 m/s","25 m/s"], answerIndex:1, difficulty:0.30,
-   explain:"v = d/t = 100/10 = 10 m/s."
-  },
-  {id:"c-fis-2", subject:"Ciencias Naturales", topic:"Física",
-   stem:"Unidad del trabajo en el SI:",
-   choices:["Newton","Joule","Watt","Pascal"], answerIndex:1, difficulty:0.30,
-   explain:"Trabajo (energía) se mide en Joules (J)."
-  },
-
-  // LECTURA CRÍTICA → Comprensión / Inferencias
-  {id:"lc-comp-1", subject:"Lectura Crítica", topic:"Comprensión",
-   stem:"Si un texto afirma que 'la matrícula aumentó 10% respecto al año pasado', ¿qué se entiende?",
-   choices:["Bajó 10%","Subió 10%","No cambió","Subió 5%"], answerIndex:1, difficulty:0.25,
-   explain:"Aumentó = subió, en este caso un 10%."
-  },
-  {id:"lc-inf-1", subject:"Lectura Crítica", topic:"Inferencias",
-   stem:"El autor 'lamenta el deterioro ambiental'. Inferir que apoya políticas de protección se basa en…",
-   choices:["Una afirmación explícita","Un dato","Una implicatura razonable","Una falacia"], answerIndex:2, difficulty:0.40,
-   explain:"No lo dice; se deduce del tono (implicatura)."
-  },
-
-  // INGLÉS → Vocabulary / Grammar
-  {id:"en-v-1", subject:"Inglés", topic:"Vocabulary",
-   stem:"Choose the best synonym for 'reliable':",
-   choices:["trustworthy","fragile","temporary","careless"], answerIndex:0, difficulty:0.30,
-   explain:"'Reliable' ≈ 'trustworthy'."
-  },
-  {id:"en-g-1", subject:"Inglés", topic:"Grammar",
-   stem:"Choose the correct option: 'She ____ to school every day.'",
-   choices:["go","goes","going","gone"], answerIndex:1, difficulty:0.30,
-   explain:"He/She/It → 'goes' in Simple Present."
-  }
-];
-
-// Plantillas para “pregunta muy parecida”
-const TEMPLATES = [
-  {
-    id:"tpl-linear-1",
-    subject:"Matemáticas",
-    topic:"Álgebra",
-    difficulty:0.30,
-    build: () => {
-      // Genera a x + b = c → x = (c-b)/a (entero)
-      let a,b,c,x;
-      for(let tries=0; tries<80; tries++){
-        a = randInt(2,9);
-        b = randInt(1,15);
-        x = randInt(1,12);
-        c = a*x + b;
-        if ((c-b)%a===0) break;
-      }
-      const answer = (c-b)/a;
-      const options = shuffle([answer, answer+1, answer-1, answer+2]).map(v=>String(v));
-      return {
-        stem:`Si ${a}x + ${b} = ${c}, ¿cuánto vale x?`,
-        choices: options,
-        answerIndex: options.indexOf(String(answer)),
-        explain:`${a}x = ${c} − ${b} = ${c-b} → x = ${c-b}/${a} = ${answer}.`
-      };
-    }
-  },
-  {
-    id:"tpl-hip-1",
-    subject:"Matemáticas",
-    topic:"Geometría",
-    difficulty:0.30,
-    build: () => {
-      const sets = [[3,4,5],[5,12,13],[6,8,10],[8,15,17],[9,12,15]];
-      const t = sets[randInt(0,sets.length-1)];
-      const c1=t[0], c2=t[1], h=t[2];
-      const choices = shuffle([h, h+1, h-1, h+2]).map(String);
-      return {
-        stem:`Triángulo rectángulo con catetos ${c1} y ${c2}. ¿Hipotenusa?`,
-        choices,
-        answerIndex: choices.indexOf(String(h)),
-        explain:`Pitágoras: √(${c1}²+${c2}²)=${h}.`
-      };
-    }
-  },
-  {
-    id:"tpl-stoich-1",
-    subject:"Ciencias Naturales",
-    topic:"Química",
-    difficulty:0.35,
-    build: () => {
-      const x = randInt(1,4);
-      const y = 2*randInt(1,4); // par para que sea simple
-      const o2 = x + y/4;
-      const choices = shuffle([o2, o2+0.5, o2-0.5, o2+1]).map(v=>String(v));
-      return {
-        stem:`En la combustión de C${x}H${y}, ¿coeficiente de O₂ al balancear?`,
-        choices,
-        answerIndex: choices.indexOf(String(o2)),
-        explain:`Balance: C${x}H${y} + ( ${x} + ${y}/4 ) O₂ → ${x} CO₂ + ${y/2} H₂O.`
-      };
-    }
-  },
-  {
-    id:"tpl-mru-1",
-    subject:"Ciencias Naturales",
-    topic:"Física",
-    difficulty:0.32,
-    build: () => {
-      const d = randInt(60,200);
-      const t = randInt(6,20);
-      const v = (d/t).toFixed(2);
-      const choices = shuffle([v, (d/(t+2)).toFixed(2), (d/(t-1)).toFixed(2), (d/(t+5)).toFixed(2)]);
-      return {
-        stem:`Un móvil recorre ${d} m en ${t} s (velocidad constante). ¿Velocidad (m/s)?`,
-        choices,
-        answerIndex: choices.indexOf(String(v)),
-        explain:`v = d/t = ${d}/${t} = ${v} m/s.`
-      };
-    }
-  }
-];
-
-/* ================== LÓGICA ================== */
-
-const subjectSel = document.getElementById('subject');
-const topicSel   = document.getElementById('topic');
-const userSel    = document.getElementById('user');
-const qcard = document.getElementById('qcard');
-const qmeta = document.getElementById('meta');
-const qstem = document.getElementById('question');
-const qopts = document.getElementById('options');
-const feedback = document.getElementById('feedback');
-const expDiv = document.getElementById('explanation');
-const btnSimilar = document.getElementById('similar');
-const btnNext = document.getElementById('next');
-const btnReset = document.getElementById('reset');
-
-const currentUser = ()=> userSel.value;
-const abilityKey = (s,t)=>`ability:${currentUser()}:${s}:${t}`;
-const statsKey   = (s,t)=>`stats:${currentUser()}:${s}:${t}`;
-
+/* ================== UTILIDADES ================== */
+const $ = sel => document.querySelector(sel);
 function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
 function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function sample(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function shuffle(arr){ return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]); }
+function fmtTime(s){ const m=Math.floor(s/60), r=s%60; return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; }
+function todayKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
-function loadAbility(subject,topic){
-  const v = localStorage.getItem(abilityKey(subject,topic));
-  return v ? parseFloat(v) : 0.30; // nivel inicial
-}
-function saveAbility(subject,topic,val){
-  localStorage.setItem(abilityKey(subject,topic), String(clamp(val,0.05,0.95)));
-}
-function loadStats(subject,topic){
-  const v = localStorage.getItem(statsKey(subject,topic));
-  return v ? JSON.parse(v) : {seen:0, right:0, wrong:0};
-}
-function saveStats(subject,topic,st){
-  localStorage.setItem(statsKey(subject,topic), JSON.stringify(st));
-}
-
-function subjects(){
-  const s1 = new Set(QUESTIONS.map(q=>q.subject));
-  const s2 = new Set(TEMPLATES.map(t=>t.subject));
-  return [...new Set([...s1,...s2])];
-}
-function topics(subject){
-  const t1 = QUESTIONS.filter(q=>q.subject===subject).map(q=>q.topic);
-  const t2 = TEMPLATES.filter(t=>t.subject===subject).map(t=>t.topic);
-  return [...new Set([...t1,...t2])];
-}
-function bankBy(subject,topic){
-  return QUESTIONS.filter(q=>q.subject===subject && q.topic===topic);
-}
-function templateFor(subject,topic){
-  const cands = TEMPLATES.filter(t=>t.subject===subject && t.topic===topic);
-  return cands.length ? cands[randInt(0,cands.length-1)] : null;
-}
-
-function pickNext(subject,topic){
-  const ability = loadAbility(subject,topic);
-  const bank = bankBy(subject,topic);
-  if (bank.length===0) return null;
-
-  // 70% banco fijo, 30% plantilla generada
-  if (Math.random()<0.30){
-    const tpl = templateFor(subject,topic);
-    if (tpl){
-      const built = tpl.build();
-      return {
-        id:`gen-${tpl.id}-${Date.now()}`,
-        subject, topic, difficulty: tpl.difficulty,
-        stem: built.stem, choices: built.choices,
-        answerIndex: built.answerIndex, explain: built.explain, generated:true
-      };
+/* ================== TEMAS DE ESTUDIO (contenido) ================== */
+const STUDY = {
+  "Matemáticas": {
+    "Álgebra": {
+      theory: `<h3>Ecuaciones lineales</h3>
+      <p>Una ecuación lineal tiene la forma <i>ax + b = c</i>. Para resolverla, aislamos <i>x</i>:
+      <ol><li>Restar o sumar para quitar <i>b</i>.</li><li>Dividir por <i>a</i>.</li></ol></p>`,
+      examples: [
+        {title:"Ejemplo 1", steps:["3x + 2 = 14","3x = 12","x = 4"]},
+        {title:"Ejemplo 2", steps:["5x − 10 = 0","5x = 10","x = 2"]}
+      ],
+      guided: () => {
+        const a=randInt(2,9), x=randInt(1,10), b=randInt(1,10); const c=a*x+b;
+        const ans=(c-b)/a; const opts=shuffle([ans, ans+1, ans-1, ans+2]).map(String);
+        return { stem:`Resuelve: ${a}x + ${b} = ${c}`, choices:opts, answerIndex:opts.indexOf(String(ans)), explain:`${a}x=${c}-${b}=${c-b} → x=${c-b}/${a}=${ans}.` };
+      }
+    },
+    "Geometría": {
+      theory:`<h3>Pitágoras</h3><p>En un triángulo rectángulo: <i>a² + b² = c²</i> (c = hipotenusa).</p>`,
+      examples:[{title:"Ejemplo", steps:["Catetos 6 y 8","c=√(36+64)=√100=10"]}],
+      guided: ()=>{
+        const sets=[[3,4,5],[5,12,13],[6,8,10]]; const t=sample(sets); const [a,b,c]=t;
+        const opts=shuffle([c,c+1,c-1,c+2]).map(String);
+        return {stem:`Catetos ${a} y ${b}. ¿Hipotenusa?`, choices:opts, answerIndex:opts.indexOf(String(c)), explain:`√(${a}²+${b}²)=${c}.`};
+      }
+    }
+  },
+  "Ciencias Naturales": {
+    "Biología": {
+      theory:`<h3>Orgánulos</h3><p>Cloroplasto (fotosíntesis), Mitocondria (energía), Ribosoma (proteínas), Núcleo (ADN).</p>`,
+      examples:[{title:"Ejemplo", steps:["¿Qué hace el cloroplasto? → Fotosíntesis"]}],
+      guided: ()=>{
+        const pairs=[["Cloroplasto","Fotosíntesis"],["Mitocondria","Respiración celular"],["Ribosoma","Síntesis de proteínas"],["Núcleo","Almacena ADN"]];
+        const [org,func]=sample(pairs); const wrong=shuffle(pairs.filter(p=>p[0]!==org).map(p=>p[1])).slice(0,3);
+        const all=shuffle([func,...wrong]);
+        return {stem:`Función principal de ${org}:`, choices:all, answerIndex:all.indexOf(func), explain:`${org}: ${func}.`};
+      }
+    },
+    "Química": {
+      theory:`<h3>Molaridad (M)</h3><p>M = moles de soluto / litros de solución.</p>`,
+      examples:[{title:"Ejemplo", steps:["2 mol en 1 L → 2 M"]}],
+      guided: ()=>{
+        const mol=randInt(1,3), L=randInt(1,3); const M=(mol/L).toFixed(2);
+        const opts=shuffle([M,(mol/(L+1)).toFixed(2),(mol/(L+2)).toFixed(2),(mol/(L+0.5)).toFixed(2)]);
+        return {stem:`${mol} mol en ${L} L. ¿M?`, choices:opts, answerIndex:opts.indexOf(String(M)), explain:`M=n/V=${mol}/${L}=${M}.`};
+      }
+    }
+  },
+  "Sociales": {
+    "Historia de Colombia": {
+      theory:`<h3>Fechas clave</h3><ul><li>1810: inicio del proceso de independencia.</li><li>1819: Batalla de Boyacá.</li><li>1821: Constitución de Cúcuta, Gran Colombia.</li></ul>`,
+      examples:[{title:"Ejemplo", steps:["¿Qué ocurrió en 1819? → Boyacá"]}],
+      guided: ()=>{
+        const items=[["1810","inicio proceso de independencia"],["1819","Batalla de Boyacá"],["1821","Constitución de Cúcuta"]];
+        const [anio,desc]=sample(items); const opts=shuffle([anio,"1816","1830","1849"]);
+        return {stem:`Año asociado a: ${desc}`, choices:opts, answerIndex:opts.indexOf(anio), explain:`${desc} ↔ ${anio}.`};
+      }
+    },
+    "Geografía": {
+      theory:`<h3>Ríos principales</h3><p>Magdalena, Cauca, Orinoco, Amazonas (en frontera), Putumayo…</p>`,
+      examples:[{title:"Ejemplo", steps:["Más largo de Colombia → Magdalena"]}],
+      guided: ()=>{
+        const correct="Magdalena"; const opts=shuffle([correct,"Cauca","Putumayo","Orinoco"]);
+        return {stem:`Río más largo de Colombia`, choices:opts, answerIndex:opts.indexOf(correct), explain:`Magdalena.`};
+      }
+    }
+  },
+  "Lectura Crítica": {
+    "Idea principal": {
+      theory:`<h3>Idea principal</h3><p>Resume en una oración qué quiere comunicar el texto.</p>`,
+      examples:[{title:"Ejemplo", steps:["Texto sobre abejas → Idea: su papel clave en polinización."]}],
+      guided: ()=>{
+        const a=sample(["abejas","manglares","bosques urbanos"]); const b=a==="abejas"?"polinización":(a==="manglares"?"costas":"temperatura");
+        const p=`Los ${a} son esenciales para la ${b}.`;
+        const correct=`Los ${a} son esenciales para la ${b}.`;
+        const opts=shuffle([correct,`Se critica a los ${a}.`,`Son irrelevantes.`,`Solo importan en laboratorios.`]);
+        return {stem:`Texto: “${p}” ¿Idea principal?`, choices:opts, answerIndex:opts.indexOf(correct), explain:`Resume el aporte central.`};
+      }
+    }
+  },
+  "Inglés": {
+    "Vocabulary": {
+      theory:`<h3>Synonyms</h3><p>Words with similar meanings: reliable≈trustworthy.</p>`,
+      examples:[{title:"Ejemplo", steps:["smart ≈ intelligent"]}],
+      guided: ()=>{
+        const pairs=[["reliable","trustworthy"],["quick","rapid"],["smart","intelligent"],["tiny","small"]];
+        const [w,syn]=sample(pairs); const wrong=shuffle(pairs.filter(p=>p[0]!==w).map(p=>p[1])).slice(0,3);
+        const all=shuffle([syn,...wrong]);
+        return {stem:`Best synonym for “${w}”:`, choices:all, answerIndex:all.indexOf(syn), explain:`“${w}” ≈ “${syn}”.`};
+      }
     }
   }
-  // escoger la dificultad más cercana a la habilidad
-  let best=null, gap=1e9;
-  for(const q of bank){
-    const g = Math.abs((q.difficulty??0.3)-ability);
-    if(g<gap){ best=q; gap=g; }
+};
+
+/* ================== PREGUNTAS (fijas + plantillas) ================== */
+const FIXED_QUESTIONS = [
+  {id:"m-alg-1", subject:"Matemáticas", topic:"Álgebra", stem:"Si 3x + 2 = 20, ¿cuánto vale x?", choices:["4","5","6","7"], answerIndex:2, difficulty:0.30, explain:"3x = 18 → x = 6."},
+  {id:"m-geo-1", subject:"Matemáticas", topic:"Geometría", stem:"Un triángulo rectángulo tiene catetos 3 y 4. ¿Hipotenusa?", choices:["4","5","6","7"], answerIndex:1, difficulty:0.30, explain:"√(3²+4²)=5."},
+  {id:"c-q-1", subject:"Ciencias Naturales", topic:"Química", stem:"¿Cuál es la masa molar aproximada del H₂O?", choices:["18 g/mol","16 g/mol","20 g/mol","14 g/mol"], answerIndex:0, difficulty:0.25, explain:"2×1 + 16 ≈ 18 g/mol."},
+  {id:"lc-inf-1", subject:"Lectura Crítica", topic:"Inferencias", stem:"El autor 'lamenta el deterioro ambiental'. Inferir que apoya políticas de protección se basa en…", choices:["Afirmación explícita","Dato","Implicatura razonable","Falacia"], answerIndex:2, difficulty:0.40, explain:"Se deduce del tono."},
+  {id:"en-v-1", subject:"Inglés", topic:"Vocabulary", stem:"Choose the best synonym for 'reliable':", choices:["trustworthy","fragile","temporary","careless"], answerIndex:0, difficulty:0.30, explain:"'reliable'≈'trustworthy'."},
+  {id:"soc-his-1", subject:"Sociales", topic:"Historia de Colombia", stem:"¿En qué batalla se selló la independencia en 1819?", choices:["Boyacá","Ayacucho","Chacabuco","Junín"], answerIndex:0, difficulty:0.35, explain:"Boyacá fue decisiva."}
+];
+
+const TEMPLATES = [
+  // Matemáticas
+  {subject:"Matemáticas", topic:"Álgebra", difficulty:0.30, build:()=>{
+    let a,b,c,x; for(let i=0;i<50;i++){ a=randInt(2,9); b=randInt(1,15); x=randInt(1,15); c=a*x+b; if((c-b)%a===0) break; }
+    const ans=(c-b)/a, opts=shuffle([ans, ans+1, ans-1, ans+2]).map(String);
+    return {stem:`Si ${a}x + ${b} = ${c}, ¿x = ?`, choices:opts, answerIndex:opts.indexOf(String(ans)), explain:`${a}x=${c}-${b}=${c-b} → x=${c-b}/${a}=${ans}.`};
+  }},
+  {subject:"Matemáticas", topic:"Geometría", difficulty:0.30, build:()=>{
+    const sets=[[3,4,5],[5,12,13],[6,8,10]]; const t=sample(sets); const [a,b,c]=t;
+    const opts=shuffle([c,c+1,c-1,c+2]).map(String);
+    return {stem:`Catetos ${a} y ${b}. ¿Hipotenusa?`, choices:opts, answerIndex:opts.indexOf(String(c)), explain:`√(${a}²+${b}²)=${c}.`};
+  }},
+  {subject:"Matemáticas", topic:"Probabilidad", difficulty:0.30, build:()=>{
+    const ask=sample(["par","múltiplo de 3","mayor que 4"]); let correct; if(ask==="par") correct="1/2"; else if(ask==="múltiplo de 3") correct="1/3"; else correct="1/3";
+    const opts=shuffle([correct,"1/6","2/3","5/6"]);
+    return {stem:`Dado honesto: prob. de ${ask}`, choices:opts, answerIndex:opts.indexOf(correct), explain:`Espacio=6.`};
+  }},
+  // Ciencias
+  {subject:"Ciencias Naturales", topic:"Química", difficulty:0.35, build:()=>{
+    const mol=randInt(1,3), L=randInt(1,3); const M=(mol/L).toFixed(2);
+    const opts=shuffle([M,(mol/(L+1)).toFixed(2),(mol/(L+2)).toFixed(2),(mol/(L+0.5)).toFixed(2)]);
+    return {stem:`${mol} mol en ${L} L. ¿M?`, choices:opts, answerIndex:opts.indexOf(String(M)), explain:`M=n/V=${mol}/${L}=${M}.`};
+  }},
+  {subject:"Ciencias Naturales", topic:"Biología", difficulty:0.30, build:()=>{
+    const pairs=[["Cloroplasto","Fotosíntesis"],["Mitocondria","Respiración celular"],["Ribosoma","Síntesis de proteínas"],["Núcleo","Almacena ADN"]];
+    const [org,func]=sample(pairs); const wrong=shuffle(pairs.filter(p=>p[0]!==org).map(p=>p[1])).slice(0,3);
+    const all=shuffle([func,...wrong]);
+    return {stem:`Función de ${org}`, choices:all, answerIndex:all.indexOf(func), explain:`${org}: ${func}.`};
+  }},
+  // Lectura e Inglés
+  {subject:"Lectura Crítica", topic:"Idea principal", difficulty:0.35, build:()=>{
+    const a=sample(["abejas","manglares","bosques urbanos"]); const b=a==="abejas"?"polinización":(a==="manglares"?"costas":"temperatura");
+    const p=`Los ${a} son esenciales para la ${b}.`; const correct=p;
+    const opts=shuffle([correct,`Se critican los ${a}.`,`No influyen en la ${b}.`,`Solo importan en laboratorios.`]);
+    return {stem:`Texto: “${p}” ¿Idea principal?`, choices:opts, answerIndex:opts.indexOf(correct), explain:`Resume el aporte central.`};
+  }},
+  {subject:"Inglés", topic:"Vocabulary", difficulty:0.30, build:()=>{
+    const pairs=[["reliable","trustworthy"],["quick","rapid"],["smart","intelligent"],["tiny","small"]];
+    const [w,syn]=sample(pairs); const wrong=shuffle(pairs.filter(p=>p[0]!==w).map(p=>p[1])).slice(0,3);
+    const all=shuffle([syn,...wrong]);
+    return {stem:`Best synonym for “${w}”`, choices:all, answerIndex:all.indexOf(syn), explain:`“${w}”≈“${syn}”.`};
+  }},
+  // Sociales
+  {subject:"Sociales", topic:"Historia de Colombia", difficulty:0.35, build:()=>{
+    const items=[["1810","inicio proceso de independencia"],["1819","Boyacá"],["1821","Constitución de Cúcuta"]];
+    const [anio,desc]=sample(items); const opts=shuffle([anio,"1816","1830","1849"]);
+    return {stem:`Año de ${desc}`, choices:opts, answerIndex:opts.indexOf(anio), explain:`${desc} ↔ ${anio}.`};
+  }}
+];
+
+/* ================== PERFILES, TEMA Y ESTADÍSTICAS ================== */
+function setTheme(u){ document.documentElement.setAttribute('data-theme', u); }
+function pointsKey(u){ return `points:${u}`; }
+function getPoints(u){ return parseInt(localStorage.getItem(pointsKey(u))||"0",10); }
+function addPoints(u,delta){ const p=getPoints(u)+delta; localStorage.setItem(pointsKey(u), String(p)); return p; }
+function setActiveUser(u){ localStorage.setItem("activeUser", u); setTheme(u); }
+function getActiveUser(){ return localStorage.getItem("activeUser") || null; }
+
+function abilityKey(u,s,t){ return `ability:${u}:${s}:${t}`; }
+function statsKey(u,s,t){ return `stats:${u}:${s}:${t}`; }
+function abilityGet(u,s,t){ const v=localStorage.getItem(abilityKey(u,s,t)); return v?parseFloat(v):0.30; }
+function abilitySet(u,s,t,val){ localStorage.setItem(abilityKey(u,s,t), String(clamp(val,0.05,0.95))); }
+function statsGet(u,s,t){ const v=localStorage.getItem(statsKey(u,s,t)); return v?JSON.parse(v):{seen:0,right:0,wrong:0}; }
+function statsSet(u,s,t,st){ localStorage.setItem(statsKey(u,s,t), JSON.stringify(st)); }
+
+/* ================== PIN (contraseña) ================== */
+function pinKey(u){ return `pin:${u}`; }
+function getPIN(u){ return localStorage.getItem(pinKey(u)); }
+function setPIN(u,pin){ localStorage.setItem(pinKey(u), pin); }
+function enterWithPIN(user, inputId){
+  const typed = $( '#'+inputId ).value.trim();
+  if(typed.length!==4){ alert("PIN de 4 dígitos"); return; }
+  const saved = getPIN(user);
+  if(!saved){ setPIN(user, typed); } else if(saved!==typed){ alert("PIN incorrecto"); return; }
+  setActiveUser(user);
+  $("#loginView").classList.add("hidden");
+  $("#appView").classList.remove("hidden");
+  $("#who").textContent = user;
+  renderHomeScores();
+  initStudy();
+  initPracticeSelectors();
+  showSection('study');
+}
+
+/* ================== SECCIONES (Navegación) ================== */
+const sections = {
+  study: "#studyView",
+  practice: "#practiceView",
+  exam: "#examView",
+  daily: "#dailyView",
+  history: "#historyView",
+  badges: "#badgesView"
+};
+function showSection(name){
+  for(const k in sections){
+    const el = $(sections[k]);
+    if(k===name) el.classList.remove("hidden"); else el.classList.add("hidden");
   }
-  return {...best};
+  $("#navStudy").classList.toggle("active", name==='study');
+  $("#navPractice").classList.toggle("active", name==='practice');
+  $("#navExam").classList.toggle("active", name==='exam');
+  $("#navDaily").classList.toggle("active", name==='daily');
+  $("#navHistory").classList.toggle("active", name==='history');
+  $("#navBadges").classList.toggle("active", name==='badges');
+}
+$("#navStudy").onclick = ()=>showSection('study');
+$("#navPractice").onclick = ()=>{ showSection('practice'); nextQuestion(); };
+$("#navExam").onclick = ()=>showSection('exam');
+$("#navDaily").onclick = ()=>showDaily();
+$("#navHistory").onclick = ()=>showHistory();
+$("#navBadges").onclick = ()=>renderBadges();
+
+function logout(){
+  localStorage.removeItem("activeUser");
+  $("#appView").classList.add("hidden");
+  $("#loginView").classList.remove("hidden");
+  renderHomeScores();
 }
 
-function updateAbility(subject,topic,correct){
-  let ability = loadAbility(subject,topic);
-  ability += correct ? 0.05 : -0.07;  // sencillo y efectivo
-  saveAbility(subject,topic,ability);
+/* ================== HOME scores ================== */
+function renderHomeScores(){
+  $("#albaPoints").textContent = getPoints("Alba");
+  $("#laraPoints").textContent = getPoints("Lara");
+  $("#albaBadgesCount").textContent = getAllBadges("Alba").length;
+  $("#laraBadgesCount").textContent = getAllBadges("Lara").length;
 }
 
-function renderStats(subject,topic){
-  const st = loadStats(subject,topic);
-  const ability = loadAbility(subject,topic);
-  document.getElementById('stats').innerHTML = `
-    <span class="pill">Usuario: <b>${currentUser()}</b></span>
+/* ================== SUBJECT/TOPIC helpers ================== */
+function subjects(){
+  const s1=new Set(FIXED_QUESTIONS.map(q=>q.subject));
+  const s2=new Set(TEMPLATES.map(t=>t.subject));
+  const s3=new Set(Object.keys(STUDY));
+  return [...new Set([...s1,...s2,...s3])].sort();
+}
+function topics(subject){
+  const t1 = FIXED_QUESTIONS.filter(q=>q.subject===subject).map(q=>q.topic);
+  const t2 = TEMPLATES.filter(t=>t.subject===subject).map(t=>t.topic);
+  const t3 = Object.keys(STUDY[subject]||{});
+  return [...new Set([...t1,...t2,...t3])].sort();
+}
+
+/* ================== STUDY ================== */
+function initStudy(){
+  const ss=$("#studySubject"), ts=$("#studyTopic");
+  ss.innerHTML = subjects().map(s=>`<option>${s}</option>`).join('');
+  ss.onchange = ()=>{ ts.innerHTML = topics(ss.value).map(t=>`<option>${t}</option>`).join(''); renderStudy(); };
+  ts.onchange = renderStudy;
+  ss.dispatchEvent(new Event('change'));
+  $("#studyPractice").onclick = ()=>{
+    $("#subject").value = ss.value;
+    $("#topic").value = ts.value;
+    showSection('practice');
+    nextQuestion();
+  };
+  renderStudy();
+}
+function renderStudy(){
+  const s=$("#studySubject").value, t=$("#studyTopic").value;
+  const block = STUDY[s] && STUDY[s][t];
+  const sc=$("#studyContent"), ex=$("#studyExamples"), sq=$("#studyQ");
+  if(!block){ sc.innerHTML="(No hay contenido todavía)"; ex.classList.add("hidden"); sq.classList.add("hidden"); return; }
+  sc.innerHTML = block.theory || "(sin teoría)";
+  if(block.examples && block.examples.length){
+    ex.classList.remove("hidden");
+    ex.innerHTML = `<h4>Ejemplos resueltos</h4>` + block.examples.map(e=>`<div class="card"><b>${e.title}</b><ol class="small">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>`).join('');
+  }else ex.classList.add("hidden");
+  // Guided question
+  const g=block.guided && block.guided();
+  if(g){
+    sq.classList.remove("hidden");
+    $("#studyStem").textContent = g.stem;
+    const box=$("#studyOpts"); box.innerHTML="";
+    g.choices.forEach((ch,i)=>{
+      const b=document.createElement('button');
+      b.className='option'; b.textContent=ch;
+      b.onclick = ()=>{
+        [...box.children].forEach((el,idx)=>{
+          el.disabled=true;
+          if(idx===g.answerIndex) el.classList.add('correct');
+          if(idx===i && i!==g.answerIndex) el.classList.add('incorrect');
+        });
+        $("#studyResult").textContent = (i===g.answerIndex)?"✅ ¡Correcto!":"❌ Incorrecto";
+        $("#studyResult").className = "result " + ((i===g.answerIndex)?"good":"bad");
+        $("#studyResult").classList.remove("hidden");
+        $("#studyExplain").textContent = g.explain||"";
+        $("#studyExplain").classList.remove("hidden");
+      };
+      box.appendChild(b);
+    });
+    $("#studyResult").classList.add("hidden"); $("#studyExplain").classList.add("hidden");
+  } else {
+    sq.classList.add("hidden");
+  }
+}
+
+/* ================== PRACTICE ================== */
+const subjectSel = $("#subject"), topicSel=$("#topic");
+let current=null;
+
+function initPracticeSelectors(){
+  subjectSel.innerHTML = subjects().map(s=>`<option>${s}</option>`).join('');
+  subjectSel.onchange = ()=>{ topicSel.innerHTML = topics(subjectSel.value).map(t=>`<option>${t}</option>`).join(''); onTopicChange(); };
+  topicSel.onchange = onTopicChange;
+  subjectSel.dispatchEvent(new Event('change'));
+  $("#reset").onclick = ()=>{
+    const u=getActiveUser(), s=subjectSel.value, t=topicSel.value;
+    if(confirm(`¿Borrar progreso de ${u} en ${s}/${t}?`)){
+      localStorage.removeItem(abilityKey(u,s,t));
+      localStorage.removeItem(statsKey(u,s,t));
+      renderStats(u,s,t); nextQuestion();
+    }
+  };
+}
+function onTopicChange(){ const u=getActiveUser(), s=subjectSel.value, t=topicSel.value; renderStats(u,s,t); nextQuestion(); }
+function renderStats(u,subject,topic){
+  const st=statsGet(u,subject,topic), ability=abilityGet(u,subject,topic);
+  $("#stats").innerHTML = `
+    <span class="pill">Usuario: <b>${u}</b></span>
     <span class="pill">Aciertos: <b>${st.right}</b></span>
     <span class="pill">Errores: <b>${st.wrong}</b></span>
     <span class="pill">Vistas: <b>${st.seen}</b></span>
     <span class="pill">Nivel: <b>${ability.toFixed(2)}</b></span>
+    <span class="pill">Puntos: <b>${getPoints(u)}</b></span>
   `;
 }
-
-function initSelectors(){
-  subjectSel.innerHTML = subjects().map(s=>`<option>${s}</option>`).join('');
-  onSubjectChange();
+function bankBy(subject,topic){
+  return FIXED_QUESTIONS.filter(q=>q.subject===subject && q.topic===topic);
 }
-function onSubjectChange(){
-  const s = subjectSel.value;
-  const ts = topics(s);
-  topicSel.innerHTML = ts.map(t=>`<option>${t}</option>`).join('');
-  onTopicChange();
+function templatesBy(subject,topic){
+  return TEMPLATES.filter(t=>t.subject===subject && t.topic===topic);
 }
-function onTopicChange(){
-  renderStats(subjectSel.value, topicSel.value);
-  nextQuestion();
+function buildFromTemplate(subject,topic){
+  const c=templatesBy(subject,topic); if(!c.length) return null;
+  const t=sample(c); const b=t.build();
+  return { id:`gen-${subject}-${topic}-${Date.now()}-${Math.floor(Math.random()*1e6)}`, subject, topic, difficulty:t.difficulty, stem:b.stem, choices:b.choices, answerIndex:b.answerIndex, explain:b.explain, generated:true };
 }
-
-function nextQuestion(){
-  const s = subjectSel.value, t = topicSel.value;
-  const q = pickNext(s,t);
-  if(!q){
-    qcard.classList.add('hidden');
-    alert("No hay preguntas en este tema. Agrega más en QUESTIONS o TEMPLATES.");
-    return;
-  }
-  qcard.classList.remove('hidden');
-  feedback.classList.add('hidden');
-  current = q;
-  qmeta.textContent = `${q.subject} • ${q.topic} • dif ${(q.difficulty??0.3).toFixed(2)}${q.generated?' • generada':''}`;
-  qstem.textContent = q.stem;
-  qopts.innerHTML = '';
+// 60% plantilla
+function pickNext(u,subject,topic){
+  const ability = abilityGet(u,subject,topic);
+  let useTemplate = Math.random()<0.60 || bankBy(subject,topic).length===0;
+  if(useTemplate){ const g=buildFromTemplate(subject,topic); if(g) return g; }
+  const bank=bankBy(subject,topic);
+  if(!bank.length) return buildFromTemplate(subject,topic);
+  let best=null, gap=1e9;
+  for(const q of bank){ const g=Math.abs((q.difficulty??0.3)-ability); if(g<gap){ best=q; gap=g; } }
+  return {...best};
+}
+function renderQuestion(q){
+  $("#meta").textContent = `${q.subject} • ${q.topic} • dif ${(q.difficulty??0.3).toFixed(2)}${q.generated?' • generada':''}`;
+  $("#question").textContent = q.stem;
+  $("#result").className = "result hidden"; $("#result").textContent="";
+  const opts=$("#options"); opts.innerHTML="";
+  $("#explanation").classList.add("hidden"); $("#explanation").innerHTML="";
+  current=q;
   q.choices.forEach((ch,i)=>{
     const b=document.createElement('button');
-    b.className='option';
-    b.textContent=ch;
-    b.onclick=()=>selectOption(i);
-    qopts.appendChild(b);
+    b.type="button"; b.className='option'; b.textContent=ch;
+    b.addEventListener('click', ()=>selectOption(i), {once:true});
+    opts.appendChild(b);
   });
 }
-
-let current=null;
-
-function selectOption(index){
-  const correct = index===current.answerIndex;
-  [...qopts.children].forEach((el,i)=>{
-    el.disabled = true;
-    el.classList.add(i===current.answerIndex?'correct':'');
-    if(i===index && !correct) el.classList.add('incorrect');
-  });
+function nextQuestion(){
+  const u=getActiveUser(), s=subjectSel.value, t=topicSel.value;
+  const q = pickNext(u,s,t); if(!q){ alert("No hay preguntas para este tema todavía."); return; }
+  renderQuestion(q);
+}
+$("#similar").onclick = ()=>{
   const s=subjectSel.value, t=topicSel.value;
-  const st = loadStats(s,t);
-  st.seen += 1;
-  correct ? st.right++ : st.wrong++;
-  saveStats(s,t,st);
-  updateAbility(s,t,correct);
-  renderStats(s,t);
-  expDiv.innerHTML = `<div><b>${correct?'¡Correcto!':'Incorrecto.'}</b> ${current.explain??''}</div>`;
-  feedback.classList.remove('hidden');
+  const g=buildFromTemplate(s,t); if(!g){ alert("No hay plantilla para este tema."); return; }
+  renderQuestion(g);
+};
+$("#next").onclick = nextQuestion;
+function selectOption(index){
+  const u=getActiveUser(), s=subjectSel.value, t=topicSel.value;
+  const correct = index===current.answerIndex;
+  // marcar
+  [...$("#options").children].forEach((el,i)=>{
+    el.disabled=true;
+    if(i===current.answerIndex) el.classList.add('correct');
+    if(i===index && !correct) el.classList.add('incorrect');
+    if(i===index && correct) el.classList.add('correct');
+  });
+  // stats + ability + puntos
+  const st=statsGet(u,s,t); st.seen += 1; correct ? st.right++ : st.wrong++; statsSet(u,s,t,st);
+  let ab=abilityGet(u,s,t); ab += correct ? 0.05 : -0.07; abilitySet(u,s,t,ab);
+  const delta = correct ? 10 : 0; addPoints(u, delta);
+  trackHistory(u, s, t, correct);
+  checkStreak(u, correct);
+  renderStats(u,s,t);
+  // feedback
+  $("#result").textContent = correct ? "✅ ¡Correcto!" : "❌ Incorrecto";
+  $("#result").className = "result " + (correct ? "good" : "bad");
+  $("#explanation").innerHTML = `<div>${current.explain??''}</div>`;
+  $("#explanation").classList.remove("hidden");
+  // medallas
+  evaluateBadges(u);
 }
 
-btnSimilar.onclick = ()=>{
-  const s = subjectSel.value, t = topicSel.value;
-  const tpl = templateFor(s,t);
-  if(!tpl){ alert("No hay plantilla para este tema aún."); return; }
-  const v = tpl.build();
-  current = {
-    id:`gen-${tpl.id}-${Date.now()}`,
-    subject:s, topic:t, difficulty: tpl.difficulty,
-    stem:v.stem, choices:v.choices, answerIndex:v.answerIndex, explain:v.explain, generated:true
-  };
-  qstem.textContent = current.stem;
-  qopts.innerHTML = '';
-  current.choices.forEach((ch,i)=>{
-    const b=document.createElement('button');
-    b.className='option';
-    b.textContent=ch;
-    b.onclick=()=>selectOption(i);
-    qopts.appendChild(b);
-  });
-  feedback.classList.add('hidden');
-};
-
-btnNext.onclick = ()=> nextQuestion();
-
-btnReset.onclick = ()=>{
-  if(confirm("¿Borrar el progreso del usuario/tema actuales?")){
-    const s=subjectSel.value, t=topicSel.value;
-    localStorage.removeItem(abilityKey(s,t));
-    localStorage.removeItem(statsKey(s,t));
-    renderStats(s,t);
-    nextQuestion();
+/* ================== EXAM ================== */
+let exam = null, timerId=null;
+function startExam(){
+  const count=parseInt($("#examCount").value,10);
+  const minutes=parseInt($("#examMinutes").value,10);
+  const poolSubjects = subjects();
+  const qs=[];
+  for(let i=0;i<count;i++){
+    const sub = sample(poolSubjects);
+    const tops = topics(sub);
+    const top = sample(tops);
+    if(Math.random()<0.7){ const g=buildFromTemplate(sub, top); if(g) qs.push(g); else { const bank=bankBy(sub,top); if(bank.length) qs.push(sample(bank)); } }
+    else { const bank=bankBy(sub,top); if(bank.length) qs.push(sample(bank)); else { const g=buildFromTemplate(sub, top); if(g) qs.push(g); } }
   }
-};
+  exam = { items: qs, answers: Array(qs.length).fill(null), idx: 0, seconds: minutes*60 };
+  $("#examTotal").textContent = String(qs.length);
+  renderExamQuestion();
+  $("#examCard").classList.remove("hidden");
+  $("#examSummary").classList.add("hidden");
+  startTimer();
+}
+function renderExamQuestion(){
+  const i=exam.idx, q=exam.items[i];
+  $("#examIndex").textContent = String(i+1);
+  $("#examQ").textContent = q.stem;
+  const box=$("#examOptions"); box.innerHTML="";
+  q.choices.forEach((ch,ci)=>{
+    const b=document.createElement('button');
+    b.type="button"; b.className='option'; b.textContent=ch;
+    const chosen = exam.answers[i]===ci;
+    if(chosen) b.classList.add('correct'); // usar verde como "seleccionado"
+    b.onclick = ()=>{ exam.answers[i]=ci; renderExamQuestion(); };
+    box.appendChild(b);
+  });
+  $("#examPrev").onclick = ()=>{ if(exam.idx>0){ exam.idx--; renderExamQuestion(); } };
+  $("#examNext").onclick = ()=>{ if(exam.idx<exam.items.length-1){ exam.idx++; renderExamQuestion(); } };
+}
+function startTimer(){ stopTimer(); $("#examTimer").textContent = fmtTime(exam.seconds); timerId = setInterval(()=>{ exam.seconds--; $("#examTimer").textContent = fmtTime(exam.seconds); if(exam.seconds<=0){ finishExam(); } },1000); }
+function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+function finishExam(){
+  stopTimer();
+  const u=getActiveUser();
+  let correct=0;
+  const list=$("#sumList"); list.innerHTML="";
+  exam.items.forEach((q,i)=>{
+    const chosen = exam.answers[i];
+    const ok = chosen===q.answerIndex;
+    if(ok) correct++;
+    const li=document.createElement('li');
+    const letter = idx=>["A","B","C","D"][idx] || (idx+1);
+    li.innerHTML = `<div><b>${i+1}.</b> ${q.stem}</div>
+      <div class="small ${ok?'good':'bad'}">Tu respuesta: ${chosen==null?'<i>No respondida</i>':letter(chosen)} — Correcta: ${letter(q.answerIndex)}</div>
+      <div class="small muted" style="margin-left:8px">${q.explain||''}</div>`;
+    list.appendChild(li);
+  });
+  $("#sumCorrect").textContent = String(correct);
+  $("#sumTotal").textContent = String(exam.items.length);
+  const points = correct*10;
+  $("#sumScore").textContent = String(points);
+  addPoints(u, points);
+  trackHistory(u, "Simulador", "Mixto", null, correct, exam.items.length);
+  evaluateBadges(u, true, correct===exam.items.length);
+  $("#examSummary").classList.remove("hidden");
+}
 
-userSel.onchange = ()=> onTopicChange();
-subjectSel.onchange = onSubjectChange;
-topicSel.onchange = onTopicChange;
+/* ================== RETO DIARIO ================== */
+let daily=null;
+function dailyKey(u){ return `daily:${u}:${todayKey()}`; }
+function hasDaily(u){ return localStorage.getItem(dailyKey(u))==="done"; }
+function startDaily(){
+  const u=getActiveUser();
+  if(hasDaily(u)){ showDaily(); return; }
+  const qs=[]; const poolSubjects=subjects();
+  for(let i=0;i<10;i++){
+    const sub=sample(poolSubjects); const top=sample(topics(sub));
+    const g=buildFromTemplate(sub, top) || sample(bankBy(sub,top));
+    if(g) qs.push(g);
+  }
+  daily = { items:qs, idx:0, wrong:false };
+  $("#dailyStart").classList.add("hidden");
+  $("#dailyDone").classList.add("hidden");
+  $("#dailyCard").classList.remove("hidden");
+  renderDaily();
+}
+function renderDaily(){
+  const q=daily.items[daily.idx];
+  $("#dailyIndex").textContent = String(daily.idx+1);
+  $("#dailyQ").textContent = q.stem;
+  const box=$("#dailyOptions"); box.innerHTML="";
+  $("#dailyResult").className="result hidden"; $("#dailyExplain").classList.add("hidden"); $("#dailyExplain").textContent="";
+  q.choices.forEach((ch,i)=>{
+    const b=document.createElement('button');
+    b.className='option'; b.textContent=ch;
+    b.onclick = ()=>{
+      const ok = i===q.answerIndex;
+      if(!ok) daily.wrong=true;
+      [...box.children].forEach((el,idx)=>{
+        el.disabled=true;
+        if(idx===q.answerIndex) el.classList.add('correct');
+        if(idx===i && !ok) el.classList.add('incorrect');
+        if(idx===i && ok) el.classList.add('correct');
+      });
+      $("#dailyResult").textContent = ok ? "✅ ¡Correcto!" : "❌ Incorrecto";
+      $("#dailyResult").className = "result " + (ok ? "good" : "bad");
+      $("#dailyExplain").textContent = q.explain || "";
+      $("#dailyExplain").classList.remove("hidden");
+    };
+    box.appendChild(b);
+  });
+  $("#dailyNext").onclick = ()=>{
+    if(daily.idx < daily.items.length-1){ daily.idx++; renderDaily(); }
+    else {
+      const u=getActiveUser();
+      localStorage.setItem(dailyKey(u),"done");
+      const gained = daily.wrong? (10*daily.items.length) : (20*daily.items.length); // doble si perfecto
+      addPoints(u, gained);
+      trackHistory(u, "Reto diario", "Mixto", null, daily.items.length - (daily.wrong?1:0), daily.items.length);
+      evaluateBadges(u, false, !daily.wrong);
+      showDaily();
+    }
+  };
+}
+function showDaily(){
+  const u=getActiveUser();
+  $("#dailyCard").classList.add("hidden");
+  $("#dailyStart").classList.toggle("hidden", hasDaily(u));
+  $("#dailyDone").classList.toggle("hidden", !hasDaily(u));
+  showSection('daily');
+}
 
-initSelectors();
+/* ================== HISTORIAL ================== */
+function histKey(u){ return `history:${u}`; }
+function getHistory(u){ return JSON.parse(localStorage.getItem(histKey(u))||"[]"); }
+function pushHistory(u, rec){ const h=getHistory(u); h.push(rec); localStorage.setItem(histKey(u), JSON.stringify(h.slice(-200))); } // máximo 200
+function trackHistory(u, subject, topic, correct=null, correctCount=0, total=1){
+  const rec = { date: new Date().toISOString(), subject, topic, correct, correctCount, total };
+  pushHistory(u, rec);
+}
+function showHistory(){
+  const u=getActiveUser(); const h=getHistory(u);
+  const list=$("#histList"); list.innerHTML = h.slice(-20).reverse().map(r=>{
+    const d=new Date(r.date); const dd=d.toLocaleString();
+    const label = (r.correct===null) ? `Examen/Reto: ${r.correctCount}/${r.total}` : (r.correct ? "✔️" : "✖️");
+    return `<li>${dd} — <b>${r.subject}</b> / ${r.topic} — ${label}</li>`;
+  }).join('');
+  // chart últimos 7 días
+  const daily = {};
+  for(const r of h){
+    const day = r.date.slice(0,10);
+    if(!daily[day]) daily[day]={correct:0,total:0};
+    daily[day].correct += (r.correct===null? r.correctCount : (r.correct?1:0));
+    daily[day].total   += (r.correct===null? r.total : 1);
+  }
+  const days = Object.keys(daily).sort().slice(-7);
+  const data = days.map(d=>({day:d, acc: daily[d].total? (daily[d].correct/daily[d].total)*100 : 0}));
+  drawChart($("#histChart"), data);
+  showSection('history');
+}
+function drawChart(canvas, data){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const pad=30, w=canvas.width, h=canvas.height, cw=w-pad*2, ch=h-pad*2;
+  ctx.strokeStyle="#ccc"; ctx.fillStyle="#000"; ctx.font="12px system-ui";
+  // axes
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
+  // bars
+  const bw = cw / Math.max(1,data.length);
+  data.forEach((d,i)=>{
+    const x=pad + i*bw + bw*0.15;
+    const val = d.acc; const bh = (val/100)*ch;
+    ctx.fillStyle = getActiveUser()==="Alba" ? "#e91e63" : "#7e57c2";
+    ctx.fillRect(x, h-pad-bh, bw*0.7, bh);
+    ctx.fillStyle="#000"; ctx.fillText(String(Math.round(val))+"%", x, h-pad-bh-4);
+    ctx.fillText(d.day.slice(5), x, h-pad+14);
+  });
+}
 
-/* ================== Cómo ampliar ==================
-  1) Añade preguntas en QUESTIONS (copia un objeto y cambia el contenido).
-  2) Añade plantillas “similares” en TEMPLATES (para variar números).
-  3) Para nuevas asignaturas/temas, basta con poner nuevos nombres en subject/topic.
-==================================================== */
+/* ================== MEDALLAS ================== */
+const BADGE_LIST = [
+  {id:"streak10", name:"Racha 10", desc:"10 aciertos seguidos en práctica."},
+  {id:"hundredQs", name:"Centenaria", desc:"100 preguntas contestadas (en práctica)."},
+  {id:"mathMax", name:"Nivel top Mate", desc:"Nivel ≥ 0.80 en Matemáticas/Álgebra."},
+  {id:"perfectExam", name:"Examen perfecto", desc:"Simulador con 100% correctas."},
+  {id:"dailyPerfect", name:"Reto perfecto", desc:"Reto diario sin errores."}
+];
+function badgesKey(u){ return `badges:${u}`; }
+function getAllBadges(u){ return JSON.parse(localStorage.getItem(badgesKey(u))||"[]"); }
+function awardBadge(u,id){
+  const b=getAllBadges(u); if(!b.includes(id)){ b.push(id); localStorage.setItem(badgesKey(u), JSON.stringify(b)); }
+}
+let streak=0;
+function checkStreak(u, correct){
+  streak = correct ? streak+1 : 0;
+  if(streak>=10) awardBadge(u,"streak10");
+  // 100 preguntas (práctica)
+  const total = Object.keys(localStorage).filter(k=>k.startsWith(`stats:${u}:`)).map(k=>JSON.parse(localStorage.getItem(k)).seen||0).reduce((a,b)=>a+b,0);
+  if(total>=100) awardBadge(u,"hundredQs");
+  // nivel mate
+  const level = abilityGet(u,"Matemáticas","Álgebra");
+  if(level>=0.80) awardBadge(u,"mathMax");
+}
+function evaluateBadges(u, fromExam=false, perfect=false){
+  if(fromExam && perfect) awardBadge(u,"perfectExam");
+  if(!fromExam && perfect) awardBadge(u,"dailyPerfect");
+}
+function renderBadges(){
+  const u=getActiveUser(); const owned=new Set(getAllBadges(u));
+  $("#badgesBox").innerHTML = BADGE_LIST.map(b=>{
+    const has=owned.has(b.id);
+    return `<span class="badge" style="${has?'':'opacity:.4'}">🏅 <b>${b.name}</b> — ${b.desc}</span>`;
+  }).join('');
+  showSection('badges');
+}
+
+/* ================== INICIO ================== */
+(function start(){
+  // mostrar login o app
+  const u=getActiveUser();
+  setTheme(u||"Alba");
+  renderHomeScores();
+  if(u){
+    $("#loginView").classList.add("hidden");
+    $("#appView").classList.remove("hidden");
+    $("#who").textContent=u;
+    initStudy();
+    initPracticeSelectors();
+    showSection('study');
+  } else {
+    $("#loginView").classList.remove("hidden");
+    $("#appView").classList.add("hidden");
+  }
+})();
 </script>
 
-<div class="footer muted small">
-  Hecho con cariño para practicar Saber 11. Uso personal y educativo.
+<div class="small muted" style="margin-top:16px">
+  Hecho para práctica personal de Saber 11 — Contenido de estudio y preguntas generadas/parametrizadas (no copiado de bancos con copyright).<br>
+  Sugerencia: guarda esta página en la pantalla de inicio del iPad para que Alba y Lara la usen como una app.
 </div>
+
 </body>
 </html>
